@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-// import { RecaptchaV2Checkbox, type RecaptchaV2CheckboxHandle } from '../components/RecaptchaV2Checkbox';
+import { RecaptchaV2Checkbox, type RecaptchaV2CheckboxHandle } from '../components/RecaptchaV2Checkbox';
 
 function LoginPageContent() {
   const router = useRouter();
@@ -18,13 +18,13 @@ function LoginPageContent() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  // const recaptchaRef = useRef<RecaptchaV2CheckboxHandle>(null);
+  const recaptchaRef = useRef<RecaptchaV2CheckboxHandle>(null);
 
   useEffect(() => {
     // Check if user is already logged in
     const employerAuth = localStorage.getItem('employerAuth');
     const jobSeekerAuth = localStorage.getItem('jobSeekerAuth');
-    
+
     if (employerAuth) {
       router.push('/my-account');
     } else if (jobSeekerAuth) {
@@ -36,16 +36,16 @@ function LoginPageContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    // const recaptchaToken = recaptchaRef.current?.getToken() ?? null;
-    // if (!recaptchaToken) {
-    //   setError('Please complete the "I\'m not a robot" captcha before signing in.');
-    //   return;
-    // }
+    const recaptchaToken = recaptchaRef.current?.getToken() ?? null;
+    if (!recaptchaToken) {
+      setError('Please complete the "I\'m not a robot" captcha before signing in.');
+      return;
+    }
     setLoading(true);
 
     try {
-      const endpoint = userType === 'employer' 
-        ? '/api/employers/login' 
+      const endpoint = userType === 'employer'
+        ? '/api/employers/login'
         : '/api/job-seekers/login';
 
       const response = await fetch(endpoint, {
@@ -53,7 +53,7 @@ function LoginPageContent() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password /*, recaptchaToken */ }),
+        body: JSON.stringify({ email, password, recaptchaToken }),
       });
 
       const contentType = response.headers.get('content-type');
@@ -61,11 +61,11 @@ function LoginPageContent() {
       const data = isJson ? await response.json() : null;
 
       if (response.ok && data?.user) {
-        // recaptchaRef.current?.reset();
+        recaptchaRef.current?.reset();
         // Store auth data
         const authKey = userType === 'employer' ? 'employerAuth' : 'jobSeekerAuth';
         const userKey = userType === 'employer' ? 'employerUser' : 'jobSeekerUser';
-        
+
         localStorage.setItem(authKey, 'true');
         localStorage.setItem(userKey, JSON.stringify(data.user));
 
@@ -95,7 +95,7 @@ function LoginPageContent() {
   return (
     <div className="min-h-screen bg-white">
       <Header activePage="login" />
-      
+
       <div className="container mx-auto px-4 md:px-12 lg:px-16 xl:px-24 2xl:px-32 py-12">
         <div className="max-w-md mx-auto">
           <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">Sign in</h1>
@@ -105,28 +105,26 @@ function LoginPageContent() {
               Sign in as a job seeker to save this job to your list.
             </p>
           )}
-          
+
           {/* User Type Toggle */}
           <div className="mb-6 flex gap-4 justify-center">
             <button
               type="button"
               onClick={() => setUserType('employer')}
-              className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                userType === 'employer'
+              className={`px-6 py-2 rounded-lg font-medium transition-colors ${userType === 'employer'
                   ? 'bg-yellow-400 text-gray-900'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Employer
             </button>
             <button
               type="button"
               onClick={() => setUserType('job-seeker')}
-              className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                userType === 'job-seeker'
+              className={`px-6 py-2 rounded-lg font-medium transition-colors ${userType === 'job-seeker'
                   ? 'bg-yellow-400 text-gray-900'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Job Seeker
             </button>
@@ -195,7 +193,7 @@ function LoginPageContent() {
               </div>
             </div>
 
-            {/* <RecaptchaV2Checkbox ref={recaptchaRef} /> */}
+            <RecaptchaV2Checkbox ref={recaptchaRef} />
 
             <div>
               <button
