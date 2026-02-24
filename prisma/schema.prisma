@@ -1,0 +1,324 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma-gen/client"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Admin {
+  id            String   @id @default(cuid())
+  username      String   @unique
+  password      String
+  email         String   @unique
+  fullName      String?
+  role          String   @default("Full Admin Access") // Owner, Full Admin Access, Limited Access
+  status        String   @default("Active") // Active, Pending
+  notifications Json?    // To store { jobPosted: true, employerSignUp: true, ... }
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("admins")
+}
+
+model Job {
+  id              String    @id @default(cuid())
+  title           String
+  employer        String
+  product         String?
+  jobDescription  String
+  jobType         String
+  categories      String
+  location        String    @default("Onsite")
+  salaryFrom      String?
+  salaryTo        String?
+  salaryFrequency String?   @default("yearly")
+  howToApply      String    @default("email")
+  applyValue      String?
+  featured        Boolean   @default(false)
+  status          String    @default("Active")
+  views           Int       @default(0)
+  applications    Int       @default(0)
+  postedBy        String    @default("Admin")
+  postingDate     DateTime  @default(now())
+  expirationDate  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("jobs")
+}
+
+model Employer {
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  fullName           String
+  phone              String
+  location           String
+  password           String
+  companyName        String
+  website            String
+  logoUrl            String?
+  companyDescription String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("employers")
+}
+
+model JobSeeker {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  password  String
+  firstName String
+  lastName  String
+  phone     String?
+  location  String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  resumes   Resume[]
+  savedJobs SavedJob[]
+
+  @@map("job_seekers")
+}
+
+model SavedJob {
+  id          String    @id @default(cuid())
+  jobSeekerId String
+  jobId       String
+  createdAt   DateTime  @default(now())
+  jobSeeker   JobSeeker @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
+
+  @@unique([jobSeekerId, jobId])
+  @@map("saved_jobs")
+}
+
+model Resume {
+  id               String    @id @default(cuid())
+  jobSeekerId      String
+  resumeFileUrl    String?
+  desiredJobTitle  String
+  jobType          String
+  categories       String
+  personalSummary  String
+  location         String
+  phone            String
+  letEmployersFind Boolean   @default(true)
+  workExperience   String?
+  education        String?
+  views            Int       @default(0)
+  status           String    @default("Active")
+  customFields     Json?     // Stores extra custom fields
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  jobSeeker        JobSeeker @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
+
+  @@map("resumes")
+}
+
+model JobAlert {
+  id         String    @id @default(cuid())
+  email      String
+  keywords   String?
+  location   String?
+  frequency  String    @default("Daily")
+  lastSentAt DateTime?
+  status     String    @default("Active")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@map("job_alerts")
+}
+
+model Product {
+  id                     String          @id @default(cuid())
+  name                   String
+  description            String?
+  price                  Decimal         @db.Decimal(10, 2)
+  firstMonthFree         Boolean         @default(false)
+  postJobs               Boolean         @default(false)
+  featuredEmployer       Boolean         @default(false)
+  resumeAccess           Boolean         @default(false)
+  postResumes            Boolean         @default(false)
+  jobAccess              Boolean         @default(false)
+  assignedOnRegistration Boolean         @default(false)
+  active                 Boolean         @default(true)
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  billingInterval        BillingInterval @default(MONTHLY)
+  type                   ProductType
+  orders                 Order[]
+
+  @@map("products")
+}
+
+model Discount {
+  id              String         @id @default(cuid())
+  code            String         @unique
+  value           Decimal        @db.Decimal(10, 2)
+  maxUses         Int            @default(1)
+  maxUsesPerUser  Int            @default(1)
+  usedCount       Int            @default(0)
+  appliesTo       String?        // Comma-separated product IDs or "All"
+  startDate       DateTime
+  expiryDate      DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  status          DiscountStatus @default(NOT_ACTIVE)
+  type            DiscountType
+
+  @@map("discounts")
+}
+
+model Order {
+  id              String         @id @default(cuid())
+  invoiceNumber   String         @unique
+  productId       String
+  total           Decimal        @db.Decimal(10, 2)
+  createdAt       DateTime       @default(now())
+  employerId      String?
+  jobSeekerId     String?
+  paymentMethodId String?
+  customerType    ProductType
+  status          OrderStatus    @default(UNPAID)
+  paymentMethod   PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
+  product         Product        @relation(fields: [productId], references: [id])
+
+  @@map("orders")
+}
+
+model PaymentMethod {
+  id        String   @id @default(cuid())
+  name      String
+  isActive  Boolean  @default(true)
+  config    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+
+  @@map("payment_methods")
+}
+
+model CustomField {
+  id          String       @id @default(cuid())
+  caption     String
+  type        FieldType
+  context     FieldContext
+  required    Boolean      @default(false)
+  hidden      Boolean      @default(false)
+  order       Int          @default(0)
+  options     String?
+  placeholder String?
+  helpText    String?
+  validation  String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("custom_fields")
+}
+
+model Category {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  slug            String   @unique
+  description     String?
+  caption         String   @default("Categories")
+  required        Boolean  @default(true)
+  hidden          Boolean  @default(false)
+  displayAs       String   @default("MultiList")
+  maxChoices      Int      @default(0)
+  order           Int      @default(0)
+  pageTitle       String?
+  url             String?
+  onetOccupation  String?
+  metaDescription String?
+  metaKeywords    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("categories")
+}
+
+model JobType {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  caption     String   @default("Job Type")
+  required    Boolean  @default(true)
+  hidden      Boolean  @default(false)
+  displayAs   String   @default("Dropdown")
+  maxChoices  Int      @default(1)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("job_types")
+}
+
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+enum ProductType {
+  EMPLOYER
+  JOB_SEEKER
+}
+
+enum BillingInterval {
+  MONTHLY
+  YEARLY
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
+enum DiscountStatus {
+  ACTIVE
+  EXPIRED
+  NOT_ACTIVE
+  PENDING_USED
+}
+
+enum OrderStatus {
+  PAID
+  UNPAID
+}
+
+enum FieldType {
+  TEXT_FIELD
+  TEXT_AREA
+  EMAIL
+  PASSWORD
+  NUMBER
+  DATE
+  DROPDOWN
+  MULTISELECT
+  CHECKBOX
+  RADIO
+  FILE
+  PICTURE
+  LOCATION
+  COMPLEX
+  SOCIAL_NETWORK
+  GALLERY
+  ACCOUNT_TYPE
+}
+
+enum FieldContext {
+  EMPLOYER
+  JOB_SEEKER
+  RESUME
+  APPLICATION
+  JOB
+}
