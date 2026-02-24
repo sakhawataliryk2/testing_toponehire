@@ -258,6 +258,24 @@ model JobType {
   @@map("job_types")
 }
 
+model Application {
+  id              String   @id @default(cuid())
+  jobId           String
+  jobTitle        String
+  companyName     String
+  applicantName   String
+  applicantEmail  String
+  applicantPhone  String?
+  resumeTitle     String?
+  coverLetter     String?
+  status          String   @default("New") // New, Reviewed, Shortlisted, Rejected, Hired
+  applicationDate DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("applications")
+}
+
 model SystemSetting {
   id        String   @id @default(cuid())
   key       String   @unique
