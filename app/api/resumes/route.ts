@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
-import { verifyRecaptchaToken } from '../../../lib/recaptcha';
+import { verifyRecaptchaV2Token } from '../../../lib/recaptcha';
 
 export async function GET(request: NextRequest) {
   try {
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     const recaptchaToken = body?.recaptchaToken as string | undefined;
-    const recaptchaOk = await verifyRecaptchaToken(recaptchaToken, 'SUBMIT');
+    const recaptchaOk = await verifyRecaptchaV2Token(recaptchaToken);
     if (!recaptchaOk) {
       return NextResponse.json(
         { error: 'reCAPTCHA verification failed' },

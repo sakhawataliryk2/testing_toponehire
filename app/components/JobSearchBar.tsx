@@ -1,9 +1,16 @@
 interface JobSearchBarProps {
   onKeywordChange?: (keyword: string) => void;
   onLocationChange?: (location: string) => void;
+  keyword?: string;
+  location?: string;
 }
 
-export default function JobSearchBar({ onKeywordChange, onLocationChange }: JobSearchBarProps) {
+export default function JobSearchBar({
+  onKeywordChange,
+  onLocationChange,
+  keyword = '',
+  location = ''
+}: JobSearchBarProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Search is handled by parent component via onChange
@@ -17,6 +24,7 @@ export default function JobSearchBar({ onKeywordChange, onLocationChange }: JobS
             <input
               type="text"
               placeholder="Keywords"
+              value={keyword}
               onChange={(e) => onKeywordChange?.(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded text-gray-900 focus:outline-none focus:ring-2 focus:ring-yellow-400"
             />
@@ -25,6 +33,7 @@ export default function JobSearchBar({ onKeywordChange, onLocationChange }: JobS
             <input
               type="text"
               placeholder="Location"
+              value={location}
               onChange={(e) => onLocationChange?.(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded text-gray-900 focus:outline-none focus:ring-2 focus:ring-yellow-400"
             />

@@ -52,3 +52,56 @@ export async function DELETE(
     return NextResponse.json({ error: 'Failed to delete job' }, { status: 500 });
   }
 }
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+
+    // Extract updateable fields
+    const {
+      title,
+      jobDescription,
+      jobType,
+      categories,
+      location,
+      salaryFrom,
+      salaryTo,
+      salaryFrequency,
+      howToApply,
+      applyValue,
+      status,
+      expirationDate
+    } = body;
+
+    const updatedJob = await prisma.job.update({
+      where: { id },
+      data: {
+        title,
+        jobDescription,
+        jobType,
+        categories,
+        location,
+        salaryFrom: salaryFrom ? salaryFrom.toString() : null,
+        salaryTo: salaryTo ? salaryTo.toString() : null,
+        salaryFrequency,
+        howToApply,
+        applyValue,
+        status,
+        expirationDate: expirationDate ? new Date(expirationDate) : null,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Job updated successfully',
+      job: updatedJob
+    });
+  } catch (error) {
+    console.error('Error updating job:', error);
+    return NextResponse.json({ error: 'Failed to update job' }, { status: 500 });
+  }
+}

@@ -1,9 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function HeroSection() {
+  const router = useRouter();
   const [liveJobCount, setLiveJobCount] = useState<number | null>(null);
+  const [keywords, setKeywords] = useState('');
+  const [location, setLocation] = useState('');
 
   useEffect(() => {
     fetch('/api/jobs?status=Active&countOnly=true')
@@ -11,8 +15,17 @@ export default function HeroSection() {
       .then((data) => {
         if (typeof data.count === 'number') setLiveJobCount(data.count);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (keywords) params.append('keywords', keywords);
+    if (location) params.append('location', location);
+
+    router.push(`/jobs?${params.toString()}`);
+  };
 
   const countText =
     liveJobCount !== null
@@ -28,14 +41,16 @@ export default function HeroSection() {
           <p className="text-2xl md:text-3xl mb-8">
             Elevate your career with <span className="text-yellow-400">TopOneHire</span>
           </p>
-          
+
           {/* Search Form */}
           <div className="bg-white rounded-lg p-4 shadow-lg">
-            <form className="flex flex-col md:flex-row gap-4">
+            <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
                 <input
                   type="text"
                   placeholder="Keywords"
+                  value={keywords}
+                  onChange={(e) => setKeywords(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded text-gray-900 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                 />
               </div>
@@ -43,6 +58,8 @@ export default function HeroSection() {
                 <input
                   type="text"
                   placeholder="Location"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded text-gray-900 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                 />
               </div>

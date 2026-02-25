@@ -106,28 +106,28 @@ export default function EmployerRegistrationPage() {
     try {
       // Collect all custom field values
       const submissionData: Record<string, any> = {};
-      
+
       // Upload files for custom fields (PICTURE, FILE types)
       const fileUploadPromises: Promise<void>[] = [];
-      
+
       for (const field of customFields) {
         const fieldKey = `customField_${field.id}`;
         const value = formData[fieldKey];
-        
+
         if ((field.type === 'PICTURE' || field.type === 'FILE') && value instanceof File) {
           // Upload file and store URL
           const uploadPromise = (async () => {
             const fileFormData = new FormData();
             fileFormData.append('file', value);
-            
+
             // Use /api/upload/logo for PICTURE types (images), /api/upload for FILE types (documents)
             const uploadEndpoint = field.type === 'PICTURE' ? '/api/upload/logo' : '/api/upload';
-            
+
             const uploadResponse = await fetch(uploadEndpoint, {
               method: 'POST',
               body: fileFormData,
             });
-            
+
             if (uploadResponse.ok) {
               const uploadData = await uploadResponse.json();
               submissionData[fieldKey] = uploadData.url;
@@ -142,7 +142,7 @@ export default function EmployerRegistrationPage() {
           submissionData[fieldKey] = value;
         }
       }
-      
+
       // Wait for all file uploads to complete
       try {
         await Promise.all(fileUploadPromises);
@@ -153,7 +153,7 @@ export default function EmployerRegistrationPage() {
         setIsSubmitting(false);
         return;
       }
-      
+
       // Handle legacy logo field if it exists
       if (formData.logo && formData.logo instanceof File) {
         const logoFormData = new FormData();
@@ -167,7 +167,7 @@ export default function EmployerRegistrationPage() {
           submissionData.logoUrl = uploadData.url;
         }
       }
-      
+
       // Also include standard fields if they exist (for backward compatibility)
       if (formData.email) submissionData.email = formData.email;
       if (formData.password) submissionData.password = formData.password;
@@ -211,7 +211,7 @@ export default function EmployerRegistrationPage() {
   return (
     <div className="min-h-screen bg-white">
       <Header activePage="registration" />
-      
+
       {/* Main Content */}
       <div className="container mx-auto px-4 md:px-12 lg:px-16 xl:px-24 2xl:px-32 py-12">
         <div className="max-w-5xl mx-auto">
@@ -243,7 +243,7 @@ export default function EmployerRegistrationPage() {
                     // Map standard fields if custom fields match
                     let mappedValue = formData[fieldKey];
                     const captionLower = field.caption.toLowerCase();
-                    
+
                     // Map to standard fields if they match
                     if (captionLower.includes('email') && !mappedValue) mappedValue = formData.email;
                     else if ((captionLower.includes('full name') || captionLower.includes('name')) && !mappedValue) mappedValue = formData.fullName;
@@ -252,7 +252,7 @@ export default function EmployerRegistrationPage() {
                     else if (captionLower.includes('password') && !mappedValue) mappedValue = formData.password;
                     else if ((captionLower.includes('company') || captionLower.includes('company name')) && !mappedValue) mappedValue = formData.companyName;
                     else if (captionLower.includes('website') && !mappedValue) mappedValue = formData.website;
-                    
+
                     return (
                       <DynamicFormField
                         key={field.id}
@@ -284,47 +284,47 @@ export default function EmployerRegistrationPage() {
                 </div>
               )}
 
-            {/* Terms and Conditions */}
-            <div className="flex items-start">
-              <input
-                type="checkbox"
-                id="agreeToTerms"
-                name="agreeToTerms"
-                checked={formData.agreeToTerms}
-                onChange={handleCheckboxChange}
-                required
-                className="mt-1 mr-3 w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-yellow-400"
-              />
-              <label htmlFor="agreeToTerms" className="text-gray-700 text-sm">
-                I agree to the{' '}
-                <Link href="#" className="text-yellow-500 hover:text-yellow-600 underline">
-                  terms of use
-                </Link>
-                {' '}and{' '}
-                <Link href="#" className="text-yellow-500 hover:text-yellow-600 underline">
-                  privacy policy
-                </Link>
-              </label>
-            </div>
+              {/* Terms and Conditions */}
+              <div className="flex items-start">
+                <input
+                  type="checkbox"
+                  id="agreeToTerms"
+                  name="agreeToTerms"
+                  checked={formData.agreeToTerms}
+                  onChange={handleCheckboxChange}
+                  required
+                  className="mt-1 mr-3 w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-yellow-400"
+                />
+                <label htmlFor="agreeToTerms" className="text-gray-700 text-sm">
+                  I agree to the{' '}
+                  <Link href="#" className="text-yellow-500 hover:text-yellow-600 underline">
+                    terms of use
+                  </Link>
+                  {' '}and{' '}
+                  <Link href="#" className="text-yellow-500 hover:text-yellow-600 underline">
+                    privacy policy
+                  </Link>
+                </label>
+              </div>
 
-            <RecaptchaV2Checkbox ref={recaptchaRef} />
+              <RecaptchaV2Checkbox ref={recaptchaRef} />
 
-            {/* Submit Button */}
-            <div className="text-center">
-              {error && (
-                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                  {error}
-                </div>
-              )}
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-3 px-12 rounded-lg text-lg transition-colors"
-              >
-                {isSubmitting ? 'REGISTERING...' : 'REGISTER'}
-              </button>
-            </div>
-          </form>
+              {/* Submit Button */}
+              <div className="text-center">
+                {error && (
+                  <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                    {error}
+                  </div>
+                )}
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-3 px-12 rounded-lg text-lg transition-colors"
+                >
+                  {isSubmitting ? 'REGISTERING...' : 'REGISTER'}
+                </button>
+              </div>
+            </form>
           )}
         </div>
       </div>

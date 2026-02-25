@@ -1,9 +1,29 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
-export default function Sidebar() {
+interface SidebarProps {
+  jobs?: any[];
+}
+
+export default function Sidebar({ jobs = [] }: SidebarProps) {
   const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [alertKeywords, setAlertKeywords] = useState('');
+  const [submittingAlert, setSubmittingAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [adminCategories, setAdminCategories] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/categories')
+      .then(res => res.json())
+      .then(data => {
+        if (data.categories) setAdminCategories(data.categories);
+      })
+      .catch(console.error);
+  }, []);
 
   const handlePostJob = async () => {
     const auth = localStorage.getItem('employerAuth');
@@ -15,18 +35,16 @@ export default function Sidebar() {
     }
 
     const emp = JSON.parse(employerData);
-    
+
     try {
       const response = await fetch('/api/check-subscription', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ employerEmail: emp.email }),
       });
 
       const data = await response.json();
-      
+
       if (!response.ok || !data.subscription.hasActiveSubscription) {
         router.replace('/employer-products');
       } else {
@@ -37,116 +55,163 @@ export default function Sidebar() {
       router.replace('/employer-products');
     }
   };
-  const categories = [
-    { name: 'Healthcare', count: 5346 },
-    { name: 'Accounting', count: 908 },
-    { name: 'Nurse', count: 854 },
-    { name: 'Finance', count: 772 },
-    { name: 'Management', count: 596 },
-    { name: 'Information Technology', count: 465 },
-    { name: 'Marketing', count: 461 },
-    { name: 'Insurance', count: 400 },
-    { name: 'Executive', count: 399 },
-    { name: 'Legal', count: 344 },
-  ];
 
-  const states = [
-    { name: 'Texas', count: 1060 },
-    { name: 'Florida', count: 834 },
-    { name: 'California', count: 702 },
-    { name: 'Colorado', count: 569 },
-    { name: 'New York', count: 476 },
-    { name: 'Virginia', count: 427 },
-    { name: 'Tennessee', count: 362 },
-    { name: 'Alaska', count: 320 },
-    { name: 'Illinois', count: 316 },
-    { name: 'Georgia', count: 271 },
-  ];
+  const handleCreateAlert = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setSubmittingAlert(true);
+    setAlertMessage(null);
+    try {
+      const res = await fetch('/api/job-alerts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          keywords: alertKeywords.trim(),
+          frequency: 'Weekly'
+        }),
+      });
+      if (res.ok) {
+        setAlertMessage({ type: 'success', text: 'Alert created successfully!' });
+        setEmail('');
+        setAlertKeywords('');
+      } else {
+        setAlertMessage({ type: 'error', text: 'Failed to create alert.' });
+      }
+    } catch {
+      setAlertMessage({ type: 'error', text: 'An error occurred.' });
+    } finally {
+      setSubmittingAlert(false);
+    }
+  };
+
+  // Dynamic Categories and Locations Counts
+  const categoryCounts: { [key: string]: number } = {};
+  const locationCounts: { [key: string]: number } = {};
+
+  jobs.forEach(job => {
+    if (job.categories) {
+      job.categories.split(',').forEach((c: string) => {
+        const cat = c.trim();
+        if (cat) categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+      });
+    }
+    if (job.location) {
+      const loc = job.location.trim();
+      if (loc) locationCounts[loc] = (locationCounts[loc] || 0) + 1;
+    }
+  });
+
+  // Use Admin Categories as base
+  let categories = adminCategories.map(cat => ({
+    name: cat.name,
+    count: categoryCounts[cat.name] || 0
+  }));
+
+  // Fallback to derived categories if admin list is empty for now
+  if (categories.length === 0) {
+    categories = Object.entries(categoryCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+  }
+
+  const locations = Object.entries(locationCounts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
 
   return (
     <div className="space-y-6">
       {/* Employers Section */}
-      <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-3">Employers</h3>
-        <p className="text-gray-700 mb-4">
+      <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6 shadow-sm">
+        <h3 className="text-xl font-bold text-gray-900 mb-2 text-center uppercase">For Employers</h3>
+        <p className="text-gray-700 mb-4 text-center">
           Advertise your job to get qualified applicants.
         </p>
-        <button 
+        <button
           onClick={handlePostJob}
-          className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-3 px-6 rounded cursor-pointer"
+          className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-3 px-6 rounded transition-colors shadow-sm"
         >
-          Post a Job
+          POST A JOB
         </button>
       </div>
 
       {/* Job Alerts Section */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-4">Sign up for job alerts</h3>
-        <form className="space-y-4">
-          <div>
-            <input
-              type="email"
-              placeholder="Your email"
-              className="w-full px-4 py-2 border border-gray-300 rounded text-gray-900 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              placeholder="Keywords"
-              className="w-full px-4 py-2 border border-gray-300 rounded text-gray-900 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-            />
-          </div>
-          <div className="flex space-x-2">
-            <label className="flex items-center">
-              <input type="radio" name="frequency" value="daily" className="mr-2" />
-              <span className="text-sm text-gray-700">Daily</span>
-            </label>
-            <label className="flex items-center">
-              <input type="radio" name="frequency" value="weekly" className="mr-2" defaultChecked />
-              <span className="text-sm text-gray-700">Weekly</span>
-            </label>
-            <label className="flex items-center">
-              <input type="radio" name="frequency" value="monthly" className="mr-2" />
-              <span className="text-sm text-gray-700">Monthly</span>
-            </label>
-          </div>
+      <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+        <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase">Sign up for job alerts</h3>
+        <form className="space-y-3" onSubmit={handleCreateAlert}>
+          <input
+            type="email"
+            placeholder="Your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="w-full px-4 py-2 border border-gray-300 rounded text-gray-900 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-sm"
+          />
+          <input
+            type="text"
+            placeholder="Keywords"
+            value={alertKeywords}
+            onChange={(e) => setAlertKeywords(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded text-gray-900 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-sm"
+          />
+          {alertMessage && (
+            <p className={`text-xs ${alertMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+              {alertMessage.text}
+            </p>
+          )}
           <button
             type="submit"
-            className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-2 px-4 rounded"
+            disabled={submittingAlert}
+            className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-2 px-4 rounded transition-colors disabled:opacity-50 text-sm"
           >
-            Create Alert
+            {submittingAlert ? 'CREATING...' : 'CREATE ALERT'}
           </button>
         </form>
       </div>
 
-      {/* Jobs by Category */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-4">Jobs by Category</h3>
+      {/* Category Section */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm text-center">
+        <h4 className="text-lg font-bold text-gray-800 mb-3 border-b-2 border-yellow-400 pb-2">Refine by Categories</h4>
         <ul className="space-y-2">
-          {categories.map((category, index) => (
-            <li key={index}>
-              <a href="#" className="flex justify-between text-gray-700 hover:text-yellow-500">
-                <span>{category.name}</span>
-                <span className="font-semibold">{category.count}</span>
-              </a>
-            </li>
-          ))}
+          {categories.length > 0 ? (
+            categories.map((category, index) => (
+              <li key={index}>
+                <button
+                  onClick={() => router.push(`/jobs?keywords=${encodeURIComponent(category.name)}`)}
+                  className="flex justify-between w-full text-gray-700 hover:text-yellow-500 transition-colors group"
+                >
+                  <span className="group-hover:translate-x-1 transition-transform">{category.name}</span>
+                  <span className="font-semibold text-yellow-500">{category.count}</span>
+                </button>
+              </li>
+            ))
+          ) : (
+            <li className="text-gray-500 text-sm italic">No categories found</li>
+          )}
         </ul>
       </div>
 
-      {/* Jobs by State */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-4">Jobs by State</h3>
+      {/* Location Section */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+        <h3 className="text-lg font-bold text-gray-900 mb-4 border-b-2 border-yellow-400 pb-2 uppercase">Jobs by Location</h3>
         <ul className="space-y-2">
-          {states.map((state, index) => (
-            <li key={index}>
-              <a href="#" className="flex justify-between text-gray-700 hover:text-yellow-500">
-                <span>{state.name}</span>
-                <span className="font-semibold">{state.count}</span>
-              </a>
-            </li>
-          ))}
+          {locations.length > 0 ? (
+            locations.map((loc, index) => (
+              <li key={index}>
+                <button
+                  onClick={() => router.push(`/jobs?location=${encodeURIComponent(loc.name)}`)}
+                  className="flex justify-between w-full text-gray-700 hover:text-yellow-500 transition-colors group"
+                >
+                  <span className="group-hover:translate-x-1 transition-transform">{loc.name}</span>
+                  <span className="font-semibold text-yellow-500">{loc.count}</span>
+                </button>
+              </li>
+            ))
+          ) : (
+            <li className="text-gray-500 text-sm italic">No locations found</li>
+          )}
         </ul>
       </div>
     </div>

@@ -45,6 +45,28 @@ export default function JobPostingsPage() {
       setLoading(false);
     }
   };
+  const handleDeleteJob = async (jobId: string) => {
+    if (!window.confirm('Are you sure you want to delete this job posting? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/jobs/${jobId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setJobs(prevJobs => prevJobs.filter(job => job.id !== jobId));
+        alert('Job deleted successfully');
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.error || 'Failed to delete job'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting job:', error);
+      alert('An error occurred while deleting the job');
+    }
+  };
 
   if (loading) {
     return (
@@ -141,8 +163,8 @@ export default function JobPostingsPage() {
                         <td className="px-6 py-5">
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 text-[10px] font-bold rounded-full ${job.status === 'Active'
-                                ? 'bg-green-50 text-green-700'
-                                : 'bg-gray-50 text-gray-600'
+                              ? 'bg-green-50 text-green-700'
+                              : 'bg-gray-50 text-gray-600'
                               }`}
                           >
                             <span className={`w-1 h-1 rounded-full mr-1.5 ${job.status === 'Active' ? 'bg-green-600' : 'bg-gray-400'}`}></span>
@@ -160,16 +182,29 @@ export default function JobPostingsPage() {
                         </td>
                         <td className="px-6 py-5 text-right">
                           <div className="flex justify-end gap-2">
-                            <button className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-gray-200 text-gray-400 hover:text-yellow-600 transition-all" title="Edit Job">
+                            <Link
+                              href={`/my-account/job-postings/edit/${job.id}`}
+                              className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-gray-200 text-gray-400 hover:text-yellow-600 transition-all"
+                              title="Edit Job"
+                            >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                               </svg>
-                            </button>
+                            </Link>
                             <Link href={`/jobs/${job.id}`} target="_blank" className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-gray-200 text-gray-400 hover:text-blue-600 transition-all" title="View Public Page">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                               </svg>
                             </Link>
+                            <button
+                              onClick={() => handleDeleteJob(job.id)}
+                              className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-gray-200 text-gray-400 hover:text-red-600 transition-all"
+                              title="Delete Job"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -183,6 +218,6 @@ export default function JobPostingsPage() {
       </div>
 
       <Footer />
-    </div>
+    </div >
   );
 }

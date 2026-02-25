@@ -211,18 +211,27 @@ function CheckoutPageContent() {
               <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                 <h2 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Discount Code</h2>
                 <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Enter code"
-                    value={discountCode}
-                    onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm focus:border-yellow-500 focus:outline-none"
-                    disabled={!!discount}
-                  />
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      placeholder="Enter code"
+                      value={discountCode}
+                      onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 focus:outline-none transition-all"
+                      disabled={!!discount || validatingCode}
+                    />
+                    {discount && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
                   {discount ? (
                     <button
                       onClick={() => { setDiscount(null); setDiscountCode(''); }}
-                      className="px-3 py-2 bg-gray-100 text-gray-600 rounded text-xs font-bold"
+                      className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm font-bold transition-colors"
                     >
                       CLEAR
                     </button>
@@ -230,14 +239,29 @@ function CheckoutPageContent() {
                     <button
                       onClick={applyDiscount}
                       disabled={validatingCode || !discountCode}
-                      className="px-3 py-2 bg-gray-900 text-white rounded text-xs font-bold disabled:opacity-50"
+                      className="px-6 py-2 bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-200 text-gray-900 rounded-lg text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center min-w-[80px]"
                     >
-                      {validatingCode ? '...' : 'APPLY'}
+                      {validatingCode ? (
+                        <div className="w-5 h-5 border-2 border-gray-900 border-t-transparent rounded-full animate-spin"></div>
+                      ) : (
+                        'APPLY'
+                      )}
                     </button>
                   )}
                 </div>
-                {discountError && <p className="text-xs text-red-600 mt-2 font-medium">{discountError}</p>}
-                {discount && <p className="text-xs text-green-600 mt-2 font-medium">Code "{discount.code}" applied!</p>}
+                {discountError && (
+                  <div className="mt-3 flex items-center gap-1.5 text-red-600">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <p className="text-xs font-semibold">{discountError}</p>
+                  </div>
+                )}
+                {discount && (
+                  <p className="text-xs text-green-600 mt-2 font-bold px-1">
+                    Code "{discount.code}" applied!
+                  </p>
+                )}
               </div>
 
               <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">

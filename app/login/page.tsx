@@ -39,6 +39,7 @@ function LoginPageContent() {
     const recaptchaToken = recaptchaRef.current?.getToken() ?? null;
     if (!recaptchaToken) {
       setError('Please complete the "I\'m not a robot" captcha before signing in.');
+      setLoading(false);
       return;
     }
     setLoading(true);
@@ -112,8 +113,8 @@ function LoginPageContent() {
               type="button"
               onClick={() => setUserType('employer')}
               className={`px-6 py-2 rounded-lg font-medium transition-colors ${userType === 'employer'
-                  ? 'bg-yellow-400 text-gray-900'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-yellow-400 text-gray-900'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
             >
               Employer
@@ -122,8 +123,8 @@ function LoginPageContent() {
               type="button"
               onClick={() => setUserType('job-seeker')}
               className={`px-6 py-2 rounded-lg font-medium transition-colors ${userType === 'job-seeker'
-                  ? 'bg-yellow-400 text-gray-900'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-yellow-400 text-gray-900'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
             >
               Job Seeker

@@ -17,6 +17,8 @@ interface Job {
   postingDate: string;
   categories: string;
   jobType: string;
+  salaryFrom?: string;
+  salaryTo?: string;
 }
 
 function JobsPageContent() {
@@ -27,6 +29,13 @@ function JobsPageContent() {
   const [loading, setLoading] = useState(true);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchLocation, setSearchLocation] = useState('');
+
+  // Filter States
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>([]);
+  const [selectedSalaryRange, setSelectedSalaryRange] = useState<string | null>(null);
+  const [selectedLocationType, setSelectedLocationType] = useState<string | null>(null);
+
   const [jobSeeker, setJobSeeker] = useState<{ id: string } | null>(null);
   const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
   const [savingJobId, setSavingJobId] = useState<string | null>(null);
@@ -79,7 +88,7 @@ function JobsPageContent() {
         if (res.ok && data.saved !== false) {
           setSavedJobIds((prev) => new Set([...prev, saveJobId]));
         }
-      } catch (_) {}
+      } catch (_) { }
       const u = new URL(window.location.href);
       u.searchParams.delete('saveJobId');
       router.replace(u.pathname + u.search);
@@ -94,7 +103,6 @@ function JobsPageContent() {
         const data = await response.json();
         if (data.jobs) {
           setJobs(data.jobs);
-          setFilteredJobs(data.jobs);
         }
       } catch (error) {
         console.error('Error fetching jobs:', error);
@@ -104,28 +112,92 @@ function JobsPageContent() {
     };
 
     fetchJobs();
-  }, []);
+
+    // Set initial search from URL
+    const k = searchParams.get('keywords');
+    const l = searchParams.get('location');
+    if (k) setSearchKeyword(k);
+    if (l) setSearchLocation(l);
+  }, [searchParams]);
 
   useEffect(() => {
     let filtered = jobs;
 
+    // Search Keyword
     if (searchKeyword) {
+      const kw = searchKeyword.toLowerCase();
       filtered = filtered.filter(
         (job) =>
-          job.title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-          job.employer.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-          job.jobDescription.toLowerCase().includes(searchKeyword.toLowerCase())
+          job.title.toLowerCase().includes(kw) ||
+          job.employer.toLowerCase().includes(kw) ||
+          job.jobDescription.toLowerCase().includes(kw)
       );
     }
 
+    // Search Location
     if (searchLocation) {
+      const loc = searchLocation.toLowerCase();
       filtered = filtered.filter((job) =>
-        job.location.toLowerCase().includes(searchLocation.toLowerCase())
+        job.location.toLowerCase().includes(loc)
       );
+    }
+
+    // Category Filter
+    if (selectedCategories.length > 0) {
+      filtered = filtered.filter((job) => {
+        const jobCats = job.categories.split(',').map(c => c.trim());
+        return selectedCategories.some(cat => jobCats.includes(cat));
+      });
+    }
+
+    // Job Type Filter
+    if (selectedJobTypes.length > 0) {
+      filtered = filtered.filter((job) =>
+        selectedJobTypes.includes(job.jobType.trim())
+      );
+    }
+
+    // Location Type Filter (Remote/Onsite)
+    if (selectedLocationType) {
+      filtered = filtered.filter((job) => {
+        const loc = job.location.toLowerCase();
+        if (selectedLocationType === 'Remote') return loc.includes('remote');
+        if (selectedLocationType === 'Onsite') return !loc.includes('remote');
+        return true;
+      });
+    }
+
+    // Salary Range Filter
+    if (selectedSalaryRange) {
+      filtered = filtered.filter((job) => {
+        const salary = parseInt(job.salaryTo || job.salaryFrom || '0');
+        if (isNaN(salary)) return true;
+
+        if (selectedSalaryRange === 'up to $20,000') return salary <= 20000;
+        if (selectedSalaryRange === '$20,000 - $40,000') return salary >= 20000 && salary <= 40000;
+        if (selectedSalaryRange === '$40,000 - $75,000') return salary >= 40000 && salary <= 75000;
+        if (selectedSalaryRange === '$75,000 - $100,000') return salary >= 75000 && salary <= 100000;
+        if (selectedSalaryRange === '$100,000 - $150,000') return salary >= 100000 && salary <= 150000;
+        if (selectedSalaryRange === '$150,000 - $200,000') return salary >= 150000 && salary <= 200000;
+        if (selectedSalaryRange === 'more than $200,000') return salary >= 200000;
+        return true;
+      });
     }
 
     setFilteredJobs(filtered);
-  }, [searchKeyword, searchLocation, jobs]);
+  }, [searchKeyword, searchLocation, jobs, selectedCategories, selectedJobTypes, selectedSalaryRange, selectedLocationType]);
+
+  const toggleCategory = (category: string) => {
+    setSelectedCategories(prev =>
+      prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]
+    );
+  };
+
+  const toggleJobType = (jobType: string) => {
+    setSelectedJobTypes(prev =>
+      prev.includes(jobType) ? prev.filter(t => t !== jobType) : [...prev, jobType]
+    );
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -149,10 +221,12 @@ function JobsPageContent() {
     <div className="min-h-screen bg-white">
       <Header activePage="jobs" />
       <JobSearchBar
+        keyword={searchKeyword}
+        location={searchLocation}
         onKeywordChange={setSearchKeyword}
         onLocationChange={setSearchLocation}
       />
-      
+
       {/* Main Content */}
       <div className="container mx-auto px-4 md:px-12 lg:px-16 xl:px-24 2xl:px-32 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -163,7 +237,7 @@ function JobsPageContent() {
                 {loading ? 'LOADING...' : `${filteredJobs.length.toLocaleString()} JOBS FOUND`}
               </h2>
             </div>
-            
+
             {loading ? (
               <div className="text-center py-12">
                 <p className="text-gray-600">Loading jobs...</p>
@@ -188,52 +262,52 @@ function JobsPageContent() {
                     onSaveToggle={
                       jobSeeker
                         ? async (jobId, save) => {
-                            setSavingJobId(jobId);
-                            try {
-                              if (save) {
-                                const res = await fetch('/api/job-seekers/saved-jobs', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ jobSeekerId: jobSeeker.id, jobId }),
-                                });
-                                const data = await res.json().catch(() => ({}));
-                                if (res.ok && data.saved !== false) {
-                                  setSavedJobIds((prev) => new Set([...prev, jobId]));
-                                } else {
-                                  if (jobSeeker.id) fetchSavedJobs(jobSeeker.id);
-                                }
-                              } else {
-                                const res = await fetch(
-                                  `/api/job-seekers/saved-jobs?jobSeekerId=${encodeURIComponent(jobSeeker.id)}&jobId=${encodeURIComponent(jobId)}`,
-                                  { method: 'DELETE' }
-                                );
-                                if (res.ok) {
-                                  setSavedJobIds((prev) => {
-                                    const next = new Set(prev);
-                                    next.delete(jobId);
-                                    return next;
-                                  });
-                                } else if (jobSeeker.id) {
-                                  fetchSavedJobs(jobSeeker.id);
-                                }
-                              }
-                            } catch (err) {
-                              console.error('Failed to update saved job:', err);
-                              if (jobSeeker?.id) fetchSavedJobs(jobSeeker.id);
-                            } finally {
-                              setSavingJobId(null);
-                            }
-                          }
-                        : (jobId, save) => {
+                          setSavingJobId(jobId);
+                          try {
                             if (save) {
-                              router.push(
-                                '/login?returnUrl=' +
-                                  encodeURIComponent('/jobs') +
-                                  '&saveJobId=' +
-                                  encodeURIComponent(jobId)
+                              const res = await fetch('/api/job-seekers/saved-jobs', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ jobSeekerId: jobSeeker.id, jobId }),
+                              });
+                              const data = await res.json().catch(() => ({}));
+                              if (res.ok && data.saved !== false) {
+                                setSavedJobIds((prev) => new Set([...prev, jobId]));
+                              } else {
+                                if (jobSeeker.id) fetchSavedJobs(jobSeeker.id);
+                              }
+                            } else {
+                              const res = await fetch(
+                                `/api/job-seekers/saved-jobs?jobSeekerId=${encodeURIComponent(jobSeeker.id)}&jobId=${encodeURIComponent(jobId)}`,
+                                { method: 'DELETE' }
                               );
+                              if (res.ok) {
+                                setSavedJobIds((prev) => {
+                                  const next = new Set(prev);
+                                  next.delete(jobId);
+                                  return next;
+                                });
+                              } else if (jobSeeker.id) {
+                                fetchSavedJobs(jobSeeker.id);
+                              }
                             }
+                          } catch (err) {
+                            console.error('Failed to update saved job:', err);
+                            if (jobSeeker?.id) fetchSavedJobs(jobSeeker.id);
+                          } finally {
+                            setSavingJobId(null);
                           }
+                        }
+                        : (jobId, save) => {
+                          if (save) {
+                            router.push(
+                              '/login?returnUrl=' +
+                              encodeURIComponent('/jobs') +
+                              '&saveJobId=' +
+                              encodeURIComponent(jobId)
+                            );
+                          }
+                        }
                     }
                   />
                 ))}
@@ -243,7 +317,17 @@ function JobsPageContent() {
 
           {/* Right Sidebar */}
           <div className="lg:col-span-1">
-            <JobsSidebar jobs={jobs} />
+            <JobsSidebar
+              jobs={jobs}
+              selectedCategories={selectedCategories}
+              selectedJobTypes={selectedJobTypes}
+              selectedSalaryRange={selectedSalaryRange}
+              selectedLocationType={selectedLocationType}
+              onCategoryToggle={toggleCategory}
+              onJobTypeToggle={toggleJobType}
+              onSalaryRangeSelect={setSelectedSalaryRange}
+              onLocationTypeSelect={setSelectedLocationType}
+            />
           </div>
         </div>
       </div>
@@ -259,7 +343,7 @@ export default function JobsPage() {
       fallback={
         <div className="min-h-screen bg-white">
           <Header activePage="jobs" />
-          <JobSearchBar onKeywordChange={() => {}} onLocationChange={() => {}} />
+          <JobSearchBar onKeywordChange={() => { }} onLocationChange={() => { }} />
           <div className="container mx-auto px-4 md:px-12 lg:px-16 xl:px-24 2xl:px-32 py-8">
             <div className="text-center py-12">
               <p className="text-gray-600">Loading jobs...</p>

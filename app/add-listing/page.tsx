@@ -6,6 +6,7 @@ import Script from 'next/script';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import DynamicFormField from '../components/DynamicFormField';
+import { RecaptchaV2Checkbox, type RecaptchaV2CheckboxHandle } from '../components/RecaptchaV2Checkbox';
 
 interface WorkExperience {
   position: string;
@@ -34,7 +35,6 @@ interface CustomField {
   options?: string | null;
 }
 
-const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? '6Le5S20sAAAAABx0iFJVJw6Ft32Xy9KL0J_F9kdg';
 
 function CreateResumePageContent() {
   const router = useRouter();
@@ -47,7 +47,8 @@ function CreateResumePageContent() {
   const [resumeFileUrl, setResumeFileUrl] = useState<string>('');
   const personalSummaryRef = useRef<HTMLDivElement>(null);
   const workExpDescRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
-  
+  const recaptchaRef = useRef<RecaptchaV2CheckboxHandle>(null);
+
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
   const [loadingFields, setLoadingFields] = useState(true);
 
@@ -199,7 +200,7 @@ function CreateResumePageContent() {
 
   const applyFormat = (command: string, value?: string, ref?: React.RefObject<HTMLDivElement | null> | HTMLDivElement | null) => {
     let targetElement: HTMLDivElement | null = null;
-    
+
     if (ref) {
       // Handle both RefObject and direct element
       if ('current' in ref) {
@@ -210,11 +211,11 @@ function CreateResumePageContent() {
     } else {
       targetElement = personalSummaryRef.current;
     }
-    
+
     if (targetElement) {
       targetElement.focus();
       document.execCommand(command, false, value);
-      
+
       if (ref && !('current' in ref)) {
         // Direct element passed - find the index
         const index = workExperiences.findIndex((_, i) => workExpDescRefs.current[i] === targetElement);
@@ -269,48 +270,35 @@ function CreateResumePageContent() {
     setLoading(true);
 
     try {
-      // Get reCAPTCHA token before submitting (wait for script to be ready, retry once)
-      let recaptchaToken: string | null = null;
-      const getToken = async (): Promise<string | null> => {
-        if (typeof window === 'undefined' || !(window as any).grecaptcha?.enterprise) return null;
-        await new Promise<void>((resolve) => {
-          (window as any).grecaptcha.enterprise.ready(() => resolve());
-        });
-        return (window as any).grecaptcha.enterprise.execute(RECAPTCHA_SITE_KEY, { action: 'SUBMIT' });
-      };
-      recaptchaToken = await getToken();
+      const recaptchaToken = recaptchaRef.current?.getToken() ?? null;
       if (!recaptchaToken) {
-        await new Promise((r) => setTimeout(r, 1500));
-        recaptchaToken = await getToken();
-      }
-      if (!recaptchaToken) {
-        alert('reCAPTCHA could not load. Please refresh the page, wait for the reCAPTCHA badge to appear, and try again.');
+        alert('Please complete the "I\'m not a robot" captcha before submitting.');
         setLoading(false);
         return;
       }
 
       // Collect all custom field values
       const submissionData: Record<string, any> = {};
-      
+
       // Upload files for custom fields (PICTURE, FILE types)
       const fileUploadPromises: Promise<void>[] = [];
-      
+
       for (const field of customFields) {
         const fieldKey = `customField_${field.id}`;
         const value = formData[fieldKey];
-        
+
         if ((field.type === 'PICTURE' || field.type === 'FILE') && value instanceof File) {
           // Upload file and store URL
           const uploadPromise = (async () => {
             const fileFormData = new FormData();
             fileFormData.append('file', value);
             fileFormData.append('folder', 'resumes');
-            
+
             const uploadResponse = await fetch('/api/upload', {
               method: 'POST',
               body: fileFormData,
             });
-            
+
             if (uploadResponse.ok) {
               const uploadData = await uploadResponse.json();
               submissionData[fieldKey] = uploadData.url;
@@ -324,15 +312,15 @@ function CreateResumePageContent() {
           submissionData[fieldKey] = value;
         }
       }
-      
+
       // Wait for all file uploads to complete
       await Promise.all(fileUploadPromises);
-      
+
       // Handle legacy resume file upload if it exists
       if (resumeFile && resumeFileUrl) {
         submissionData.resumeFileUrl = resumeFileUrl;
       }
-      
+
       // Extract standard fields from custom field values (map by caption)
       let desiredJobTitle = '';
       let jobType = '';
@@ -398,6 +386,7 @@ function CreateResumePageContent() {
       const data = await response.json();
 
       if (response.ok) {
+        recaptchaRef.current?.reset();
         // Redirect to success page with resume ID
         router.push(`/manage-listing?id=${data.resume.id}`);
       } else {
@@ -432,10 +421,6 @@ function CreateResumePageContent() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Script
-        src={`https://www.google.com/recaptcha/enterprise.js?render=${RECAPTCHA_SITE_KEY}`}
-        strategy="afterInteractive"
-      />
       <Header />
       <div className="container mx-auto px-4 md:px-12 lg:px-16 xl:px-24 2xl:px-32 py-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-8" style={{ fontFamily: 'serif' }}>
@@ -457,7 +442,7 @@ function CreateResumePageContent() {
                     // Map standard fields if custom fields match
                     let mappedValue = formData[fieldKey];
                     const captionLower = field.caption.toLowerCase();
-                    
+
                     // Map to standard fields if they match
                     if (captionLower.includes('desired') && captionLower.includes('job') && captionLower.includes('title') && !mappedValue) mappedValue = formData.desiredJobTitle;
                     else if (captionLower.includes('job') && captionLower.includes('type') && !mappedValue) mappedValue = formData.jobType;
@@ -465,7 +450,7 @@ function CreateResumePageContent() {
                     else if (captionLower.includes('personal') && captionLower.includes('summary') && !mappedValue) mappedValue = formData.personalSummary;
                     else if (captionLower.includes('location') && !mappedValue) mappedValue = formData.location;
                     else if (captionLower.includes('phone') && !mappedValue) mappedValue = formData.phone;
-                    
+
                     return (
                       <DynamicFormField
                         key={field.id}
@@ -499,7 +484,9 @@ function CreateResumePageContent() {
           )}
 
           {/* Submit Button */}
-          <div className="flex justify-center mt-8">
+          <RecaptchaV2Checkbox ref={recaptchaRef} />
+
+          <div className="flex justify-end pt-8">
             <button
               type="submit"
               disabled={loading}

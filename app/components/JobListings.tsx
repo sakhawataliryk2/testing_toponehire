@@ -22,12 +22,22 @@ function formatJobDate(dateStr: string): string {
   }
 }
 
-export default function JobListings() {
-  const [jobs, setJobs] = useState<ApiJob[]>([]);
-  const [loading, setLoading] = useState(true);
+interface JobListingsProps {
+  initialJobs?: ApiJob[];
+}
+
+export default function JobListings({ initialJobs }: JobListingsProps) {
+  const [jobs, setJobs] = useState<ApiJob[]>(initialJobs || []);
+  const [loading, setLoading] = useState(!initialJobs);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (initialJobs && initialJobs.length > 0) {
+      setJobs(initialJobs);
+      setLoading(false);
+      return;
+    }
+
     async function fetchJobs() {
       try {
         const res = await fetch('/api/jobs?limit=10');
@@ -48,7 +58,7 @@ export default function JobListings() {
       }
     }
     fetchJobs();
-  }, []);
+  }, [initialJobs]);
 
   if (loading) {
     return (

@@ -41,9 +41,15 @@ export async function POST(request: NextRequest) {
         // Check appliesTo
         if (discount.appliesTo && discount.appliesTo !== 'All') {
             const applicableProducts = discount.appliesTo.split(',').map((s: string) => s.trim());
-            // Check if productId matches or if name matches (appliesTo stores names in the current UI)
+
             const product = await prisma.product.findUnique({ where: { id: productId } });
-            if (!product || !applicableProducts.includes(product.name)) {
+
+            const isMatch = product && (
+                applicableProducts.includes(product.id) ||
+                applicableProducts.includes(product.name)
+            );
+
+            if (!isMatch) {
                 return NextResponse.json({ error: 'This discount code is not applicable to this product' }, { status: 400 });
             }
         }
