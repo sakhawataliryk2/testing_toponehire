@@ -89,9 +89,17 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ application }, { status: 201 });
     } catch (error: any) {
-        console.error('Error creating application:', error);
+        console.error('Error creating application details:', {
+            message: error?.message,
+            code: error?.code,
+            meta: error?.meta
+        });
         return NextResponse.json(
-            { error: 'Failed to create application', details: error?.message },
+            {
+                error: 'Failed to create application',
+                details: error?.message,
+                code: error?.code
+            },
             { status: 500 }
         );
     }
