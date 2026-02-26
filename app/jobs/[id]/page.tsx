@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
+import ApplicationModal from './ApplicationModal';
 
 interface JobDetail {
   id: string;
@@ -30,6 +31,18 @@ export default function JobDetailPage() {
   const id = params?.id as string;
   const [job, setJob] = useState<JobDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const auth = localStorage.getItem('jobSeekerAuth');
+    const userData = localStorage.getItem('jobSeekerUser');
+    if (auth === 'true' && userData) {
+      setIsLoggedIn(true);
+      setUser(JSON.parse(userData));
+    }
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -121,9 +134,39 @@ export default function JobDetailPage() {
                   : job.applyValue ?? 'See job description for application instructions.'}
               </p>
             </div>
+
+            <div className="mt-8 pt-8 border-t border-gray-100 flex flex-col items-center">
+              {isLoggedIn ? (
+                <button
+                  onClick={() => setIsApplyModalOpen(true)}
+                  className="w-full md:w-auto px-12 py-4 bg-yellow-500 text-white font-bold rounded-xl hover:bg-yellow-600 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                >
+                  Apply for this job
+                </button>
+              ) : (
+                <div className="text-center">
+                  <p className="text-gray-600 mb-4">Please log in as a job seeker to apply for this position.</p>
+                  <Link
+                    href={`/login?redirect=/jobs/${id}`}
+                    className="inline-block px-8 py-3 bg-gray-900 text-white font-semibold rounded-lg hover:bg-gray-800 transition-all"
+                  >
+                    Login to Apply
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {isApplyModalOpen && job && (
+        <ApplicationModal
+          job={job}
+          user={user}
+          onClose={() => setIsApplyModalOpen(false)}
+        />
+      )}
+
       <Footer />
     </div>
   );

@@ -100,6 +100,12 @@ export default function JobPostingsPage() {
                 Job Postings
               </Link>
               <Link
+                href="/my-account/applications"
+                className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm transition-colors"
+              >
+                Applications
+              </Link>
+              <Link
                 href="/my-account/invoices"
                 className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm transition-colors"
               >

@@ -168,6 +168,15 @@ export default function MyAccountPage() {
                 Job Postings
               </Link>
               <Link
+                href="/my-account/applications"
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${pathname === '/my-account/applications'
+                  ? 'border-gray-900 text-gray-900'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+              >
+                Applications
+              </Link>
+              <Link
                 href="/my-account/invoices"
                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${pathname === '/my-account/invoices'
                   ? 'border-gray-900 text-gray-900'

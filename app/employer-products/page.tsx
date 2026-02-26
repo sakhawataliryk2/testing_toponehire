@@ -16,6 +16,8 @@ interface Product {
   postJobs: boolean;
   featuredEmployer: boolean;
   resumeAccess: boolean;
+  postResumes: boolean;
+  jobAccess: boolean;
 }
 
 export default function EmployerProductsPage() {
@@ -23,10 +25,17 @@ export default function EmployerProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [userType, setUserType] = useState<'EMPLOYER' | 'JOB_SEEKER'>('EMPLOYER');
+
   useEffect(() => {
+    // Determine user type from localStorage
+    const isJobSeeker = localStorage.getItem('jobSeekerAuth') === 'true';
+    const type = isJobSeeker ? 'JOB_SEEKER' : 'EMPLOYER';
+    setUserType(type);
+
     const fetchProducts = async () => {
       try {
-        const response = await fetch('/api/products?type=EMPLOYER');
+        const response = await fetch(`/api/products?type=${type}`);
         const data = await response.json();
         if (data.products) {
           setProducts(data.products);
@@ -53,13 +62,13 @@ export default function EmployerProductsPage() {
   };
 
   const handleBuy = (productId: string) => {
-    // Check if employer is logged in
-    const auth = localStorage.getItem('employerAuth');
+    const auth = userType === 'EMPLOYER'
+      ? localStorage.getItem('employerAuth')
+      : localStorage.getItem('jobSeekerAuth');
+
     if (auth) {
-      // TODO: Implement purchase flow
       router.push(`/my-account/checkout?product=${productId}`);
     } else {
-      // If not logged in, redirect to login first
       router.push(`/login?redirect=/my-account/checkout?product=${productId}`);
     }
   };
@@ -73,13 +82,19 @@ export default function EmployerProductsPage() {
   return (
     <div className="min-h-screen bg-white">
       <Header activePage="employer-products" />
-      
+
       {/* Main Content */}
       <div className="container mx-auto px-4 md:px-12 lg:px-16 xl:px-24 2xl:px-32 py-16">
         {/* Page Title */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Pricing</h1>
-          <p className="text-lg text-gray-600 mb-6">Choose the plan that works best for your hiring needs</p>
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            {userType === 'EMPLOYER' ? 'Employer Plans' : 'Job Seeker Plans'}
+          </h1>
+          <p className="text-lg text-gray-600 mb-6">
+            {userType === 'EMPLOYER'
+              ? 'Choose the plan that works best for your hiring needs'
+              : 'Upgrade your career with our specialized tools and access'}
+          </p>
         </div>
 
         {/* Loading State */}
@@ -102,12 +117,13 @@ export default function EmployerProductsPage() {
                     {product.name}
                   </h3>
                   {product.description && (
-                    <div 
+                    <div
                       className="text-gray-700 mb-4 prose prose-sm max-w-none"
                       dangerouslySetInnerHTML={{ __html: product.description }}
                     />
                   )}
                   <div className="space-y-2 text-sm text-gray-700">
+                    {/* Employer Features */}
                     {product.postJobs && (
                       <p className="flex items-center">
                         <span className="text-green-600 mr-2">✓</span>
@@ -126,6 +142,21 @@ export default function EmployerProductsPage() {
                         Resume Database Access
                       </p>
                     )}
+
+                    {/* Job Seeker Features */}
+                    {product.postResumes && (
+                      <p className="flex items-center">
+                        <span className="text-green-600 mr-2">✓</span>
+                        Post/Manage Resumes
+                      </p>
+                    )}
+                    {product.jobAccess && (
+                      <p className="flex items-center">
+                        <span className="text-green-600 mr-2">✓</span>
+                        Full Job Access
+                      </p>
+                    )}
+
                     {product.firstMonthFree && (
                       <p className="flex items-center text-yellow-600 font-medium">
                         <span className="mr-2">🎁</span>

@@ -15,7 +15,7 @@ export default function Footer() {
     }
 
     const emp = JSON.parse(employerData);
-    
+
     try {
       const response = await fetch('/api/check-subscription', {
         method: 'POST',
@@ -26,7 +26,7 @@ export default function Footer() {
       });
 
       const data = await response.json();
-      
+
       if (!response.ok || !data.subscription.hasActiveSubscription) {
         router.replace('/employer-products');
       } else {
@@ -44,25 +44,25 @@ export default function Footer() {
           <div className="text-center md:text-left">
             <h4 className="font-semibold mb-4">General</h4>
             <ul className="space-y-2">
-              <li><a href="#" className="text-gray-300 hover:text-yellow-400">Home</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-yellow-400">Contact</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-yellow-400">About Us</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-yellow-400">Terms & Conditions</a></li>
+              <li><a href="/" className="text-gray-300 hover:text-yellow-400">Home</a></li>
+              <li><a href="/contact" className="text-gray-300 hover:text-yellow-400">Contact</a></li>
+              <li><a href="/about-us" className="text-gray-300 hover:text-yellow-400">About Us</a></li>
+              <li><a href="/terms-and-conditions" className="text-gray-300 hover:text-yellow-400">Terms & Conditions</a></li>
             </ul>
           </div>
           <div className="text-center md:text-left">
             <h4 className="font-semibold mb-4">Employer</h4>
             <ul className="space-y-2">
               <li><button onClick={handlePostJob} className="text-gray-300 hover:text-yellow-400 cursor-pointer">Post a Job</button></li>
-              <li><a href="#" className="text-gray-300 hover:text-yellow-400">Sign in</a></li>
+              <li><a href="/login" className="text-gray-300 hover:text-yellow-400">Sign in</a></li>
             </ul>
           </div>
           <div className="text-center md:text-left">
             <h4 className="font-semibold mb-4">Job Seeker</h4>
             <ul className="space-y-2">
-              <li><a href="#" className="text-gray-300 hover:text-yellow-400">Find Jobs</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-yellow-400">Create Resume</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-yellow-400">Sign in</a></li>
+              <li><a href="/jobs" className="text-gray-300 hover:text-yellow-400">Find Jobs</a></li>
+              <li><a href="/add-listing?listing_type_id=Resume" className="text-gray-300 hover:text-yellow-400">Create Resume</a></li>
+              <li><a href="/login" className="text-gray-300 hover:text-yellow-400">Sign in</a></li>
             </ul>
           </div>
         </div>

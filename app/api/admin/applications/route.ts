@@ -62,11 +62,30 @@ export async function POST(request: NextRequest) {
                 applicantName,
                 applicantEmail,
                 applicantPhone: applicantPhone || null,
+                resumeId: body.resumeId || null,
                 resumeTitle: resumeTitle || null,
                 coverLetter: coverLetter || null,
+                customFields: body.customFields || null,
                 status: 'New',
             },
         });
+
+        // Increment the job's application count if jobId is present
+        if (jobId) {
+            try {
+                await prisma.job.update({
+                    where: { id: jobId },
+                    data: {
+                        applications: {
+                            increment: 1
+                        }
+                    }
+                });
+            } catch (jobUpdateError) {
+                console.error('Error updating job applications count:', jobUpdateError);
+                // Non-fatal, just log it
+            }
+        }
 
         return NextResponse.json({ application }, { status: 201 });
     } catch (error: any) {

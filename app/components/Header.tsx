@@ -153,8 +153,8 @@ export default function Header({ activePage = '' }: HeaderProps) {
             <Link
               href="/jobs"
               className={`font-medium text-sm ${activePage === 'jobs'
-                  ? 'text-gray-900 border-b-2 border-gray-900 pb-1'
-                  : 'text-gray-700 hover:text-yellow-500'
+                ? 'text-gray-900 border-b-2 border-gray-900 pb-1'
+                : 'text-gray-700 hover:text-yellow-500'
                 }`}
             >
               Jobs
@@ -162,8 +162,8 @@ export default function Header({ activePage = '' }: HeaderProps) {
             <Link
               href="/companies"
               className={`font-medium text-sm ${activePage === 'companies'
-                  ? 'text-gray-900 border-b-2 border-gray-900 pb-1'
-                  : 'text-gray-700 hover:text-yellow-500'
+                ? 'text-gray-900 border-b-2 border-gray-900 pb-1'
+                : 'text-gray-700 hover:text-yellow-500'
                 }`}
             >
               Companies
@@ -184,8 +184,8 @@ export default function Header({ activePage = '' }: HeaderProps) {
             <Link
               href="/contact"
               className={`font-medium text-sm ${activePage === 'contact'
-                  ? 'text-gray-900 border-b-2 border-gray-900 pb-1'
-                  : 'text-gray-700 hover:text-yellow-500'
+                ? 'text-gray-900 border-b-2 border-gray-900 pb-1'
+                : 'text-gray-700 hover:text-yellow-500'
                 }`}
             >
               Contact Us
@@ -193,11 +193,11 @@ export default function Header({ activePage = '' }: HeaderProps) {
             <Link
               href="/employer-products"
               className={`font-medium text-sm ${activePage === 'employer-products'
-                  ? 'text-gray-900 border-b-2 border-gray-900 pb-1'
-                  : 'text-gray-700 hover:text-yellow-500'
+                ? 'text-gray-900 border-b-2 border-gray-900 pb-1'
+                : 'text-gray-700 hover:text-yellow-500'
                 }`}
             >
-              Employer Products
+              {userType === 'job-seeker' ? 'Job Seeker Products' : 'Employer Products'}
             </Link>
           </nav>
 
@@ -208,8 +208,8 @@ export default function Header({ activePage = '' }: HeaderProps) {
                 <Link
                   href={userType === 'employer' ? '/my-account' : '/my-listings/resume'}
                   className={`font-medium text-sm px-4 py-2 rounded border transition-colors ${activePage === 'my-account'
-                      ? 'bg-yellow-400 text-gray-900 border-yellow-400'
-                      : 'bg-yellow-400 hover:bg-yellow-500 text-gray-900 border-yellow-400'
+                    ? 'bg-yellow-400 text-gray-900 border-yellow-400'
+                    : 'bg-yellow-400 hover:bg-yellow-500 text-gray-900 border-yellow-400'
                     }`}
                 >
                   MY ACCOUNT
@@ -285,8 +285,8 @@ export default function Header({ activePage = '' }: HeaderProps) {
                 href="/jobs"
                 onClick={closeMobileMenu}
                 className={`block py-3 px-4 rounded-lg font-medium text-sm ${activePage === 'jobs'
-                    ? 'bg-yellow-100 text-gray-900'
-                    : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-yellow-100 text-gray-900'
+                  : 'text-gray-700 hover:bg-gray-100'
                   }`}
               >
                 Jobs
@@ -295,8 +295,8 @@ export default function Header({ activePage = '' }: HeaderProps) {
                 href="/companies"
                 onClick={closeMobileMenu}
                 className={`block py-3 px-4 rounded-lg font-medium text-sm ${activePage === 'companies'
-                    ? 'bg-yellow-100 text-gray-900'
-                    : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-yellow-100 text-gray-900'
+                  : 'text-gray-700 hover:bg-gray-100'
                   }`}
               >
                 Companies
@@ -325,8 +325,8 @@ export default function Header({ activePage = '' }: HeaderProps) {
                 href="/contact"
                 onClick={closeMobileMenu}
                 className={`block py-3 px-4 rounded-lg font-medium text-sm ${activePage === 'contact'
-                    ? 'bg-yellow-100 text-gray-900'
-                    : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-yellow-100 text-gray-900'
+                  : 'text-gray-700 hover:bg-gray-100'
                   }`}
               >
                 Contact Us
@@ -335,11 +335,11 @@ export default function Header({ activePage = '' }: HeaderProps) {
                 href="/employer-products"
                 onClick={closeMobileMenu}
                 className={`block py-3 px-4 rounded-lg font-medium text-sm ${activePage === 'employer-products'
-                    ? 'bg-yellow-100 text-gray-900'
-                    : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-yellow-100 text-gray-900'
+                  : 'text-gray-700 hover:bg-gray-100'
                   }`}
               >
-                Employer Products
+                {userType === 'job-seeker' ? 'Job Seeker Products' : 'Employer Products'}
               </Link>
             </div>
           </nav>
@@ -352,8 +352,8 @@ export default function Header({ activePage = '' }: HeaderProps) {
                   href={userType === 'employer' ? '/my-account' : '/my-listings/resume'}
                   onClick={closeMobileMenu}
                   className={`block text-center font-medium text-sm px-4 py-2 rounded border transition-colors ${activePage === 'my-account'
-                      ? 'bg-yellow-400 text-gray-900 border-yellow-400'
-                      : 'bg-yellow-400 hover:bg-yellow-500 text-gray-900 border-yellow-400'
+                    ? 'bg-yellow-400 text-gray-900 border-yellow-400'
+                    : 'bg-yellow-400 hover:bg-yellow-500 text-gray-900 border-yellow-400'
                     }`}
                 >
                   MY ACCOUNT

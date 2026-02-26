@@ -266,9 +266,11 @@ model Application {
   applicantName   String
   applicantEmail  String
   applicantPhone  String?
+  resumeId        String?
   resumeTitle     String?
   coverLetter     String?
   status          String   @default("New") // New, Reviewed, Shortlisted, Rejected, Hired
+  customFields     Json?     // Stores extra custom fields
   applicationDate DateTime @default(now())
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

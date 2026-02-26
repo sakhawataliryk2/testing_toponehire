@@ -3,6 +3,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import AdminLayout from '../../components/AdminLayout';
 
 const STATUS_OPTIONS = ['New', 'Reviewed', 'Shortlisted', 'Rejected', 'Hired'];
@@ -33,6 +34,7 @@ export default function ApplicationsPage() {
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [customFields, setCustomFields] = useState<any[]>([]);
 
   // Filters
   const [showFilters, setShowFilters] = useState(false);
@@ -55,6 +57,8 @@ export default function ApplicationsPage() {
     coverLetter: true,
   });
 
+  const [allColumns, setAllColumns] = useState(ALL_COLUMNS);
+
   // Status dropdown per row
   const [openStatusId, setOpenStatusId] = useState<string | null>(null);
 
@@ -71,9 +75,34 @@ export default function ApplicationsPage() {
     if (!auth) router.push('/admin/login');
     else {
       setIsAuthenticated(true);
+      fetchCustomFields();
       fetchApplications();
     }
   }, [router]);
+
+  const fetchCustomFields = async () => {
+    try {
+      const res = await fetch('/api/admin/custom-fields?context=APPLICATION');
+      const data = await res.json();
+      if (data.fields) {
+        setCustomFields(data.fields);
+        // Update all columns with custom fields
+        const combined = [...ALL_COLUMNS];
+        const newVisibleCols = { ...visibleCols };
+
+        data.fields.forEach((field: any) => {
+          const colKey = `custom_${field.id}`;
+          combined.push({ key: colKey, label: field.caption });
+          newVisibleCols[colKey] = true; // Show by default
+        });
+
+        setAllColumns(combined);
+        setVisibleCols(newVisibleCols);
+      }
+    } catch (e) {
+      console.error('Error fetching custom fields:', e);
+    }
+  };
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -166,11 +195,15 @@ export default function ApplicationsPage() {
   };
 
   const buildCsvContent = (data: any[]) => {
-    const cols = ALL_COLUMNS.filter(c => visibleCols[c.key]);
+    const cols = allColumns.filter(c => visibleCols[c.key]);
     const headerRow = cols.map(c => escapeCsvCell(c.label)).join(',');
     const dataRows = data.map(a =>
       cols.map(c => {
         if (c.key === 'applicationDate') return escapeCsvCell(new Date(a.applicationDate).toLocaleDateString('en-US'));
+        if (c.key.startsWith('custom_')) {
+          const fieldId = c.key.replace('custom_', '');
+          return escapeCsvCell(a.customFields?.[fieldId] || '');
+        }
         return escapeCsvCell(a[c.key]);
       }).join(',')
     );
@@ -429,7 +462,7 @@ export default function ApplicationsPage() {
             </button>
             {showColMenu && (
               <div className="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-xl z-20 py-2">
-                {ALL_COLUMNS.map(col => (
+                {allColumns.map(col => (
                   <label key={col.key} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer">
                     <input
                       type="checkbox"
@@ -463,6 +496,16 @@ export default function ApplicationsPage() {
                   {visibleCols.resumeTitle && <th className="px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">Resume</th>}
                   {visibleCols.status && <th className="px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">Application Status</th>}
                   {visibleCols.coverLetter && <th className="px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">Cover Letter</th>}
+
+                  {/* Dynamic Custom Field Columns */}
+                  {customFields.map(field => (
+                    visibleCols[`custom_${field.id}`] && (
+                      <th key={field.id} className="px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide whitespace-nowrap">
+                        {field.caption}
+                      </th>
+                    )
+                  ))}
+
                   <th className="px-4 py-3 w-10"></th>
                 </tr>
               </thead>
@@ -515,8 +558,19 @@ export default function ApplicationsPage() {
                         <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{app.applicantPhone || 'N/A'}</td>
                       )}
                       {visibleCols.resumeTitle && (
-                        <td className="px-4 py-3 text-gray-600 max-w-[140px] truncate" title={app.resumeTitle}>
-                          {app.resumeTitle || 'N/A'}
+                        <td className="px-4 py-3 text-gray-600 max-w-[140px] truncate">
+                          {app.resumeId ? (
+                            <Link
+                              href={`/resume/${app.resumeId}`}
+                              target="_blank"
+                              className="text-indigo-600 hover:text-indigo-800 hover:underline font-medium"
+                              title={app.resumeTitle}
+                            >
+                              {app.resumeTitle || 'View Resume'}
+                            </Link>
+                          ) : (
+                            <span title={app.resumeTitle}>{app.resumeTitle || 'N/A'}</span>
+                          )}
                         </td>
                       )}
                       {visibleCols.status && (
@@ -549,6 +603,15 @@ export default function ApplicationsPage() {
                           {app.coverLetter || '—'}
                         </td>
                       )}
+
+                      {/* Dynamic Custom Field Values */}
+                      {customFields.map(field => (
+                        visibleCols[`custom_${field.id}`] && (
+                          <td key={field.id} className="px-4 py-3 text-gray-600 text-sm whitespace-nowrap">
+                            {app.customFields?.[field.id] || '—'}
+                          </td>
+                        )
+                      ))}
                       <td className="px-4 py-3">
                         <button
                           onClick={() => handleDelete(app.id, app.applicantName)}
