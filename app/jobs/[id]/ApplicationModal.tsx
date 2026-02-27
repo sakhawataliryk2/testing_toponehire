@@ -197,7 +197,7 @@ export default function ApplicationModal({ job, user, onClose }: ApplicationModa
                                     <div className="pt-4">
                                         <p className="text-sm text-gray-500 mb-2">Want to use a different one?</p>
                                         <Link
-                                            href="/add-listing"
+                                            href="/add-listing?listing_type_id=Resume"
                                             target="_blank"
                                             className="inline-flex items-center text-yellow-600 font-bold hover:underline"
                                         >
@@ -209,7 +209,7 @@ export default function ApplicationModal({ job, user, onClose }: ApplicationModa
                                 <div className="text-center py-12 px-6 border-2 border-dashed border-gray-200 rounded-3xl bg-gray-50">
                                     <p className="text-gray-600 mb-6">You haven't created any resumes yet.</p>
                                     <Link
-                                        href="/add-listing"
+                                        href="/add-listing?listing_type_id=Resume"
                                         target="_blank"
                                         className="inline-block px-8 py-3 bg-yellow-500 text-white font-bold rounded-xl shadow-lg hover:bg-yellow-600 transition-all"
                                     >
