@@ -13,6 +13,7 @@ export default function ResumePreviewPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     if (resumeId) fetchResume();
@@ -51,6 +52,32 @@ export default function ResumePreviewPage() {
   const parseJSON = (str: string | null | undefined) => {
     if (!str) return [];
     try { return JSON.parse(str); } catch { return []; }
+  };
+
+  const handleDownloadPDF = async () => {
+    setIsDownloading(true);
+    try {
+      const element = document.getElementById('resume-card');
+      if (!element) return;
+
+      // @ts-ignore
+      const html2pdf = (await import('html2pdf.js/dist/html2pdf.min.js')).default;
+
+      const opt = {
+        margin: 10,
+        filename: `${resume.jobSeeker?.firstName || 'Resume'}_${resume.jobSeeker?.lastName || ''}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      await html2pdf().from(element).set(opt).save();
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   if (loading) {
@@ -106,16 +133,40 @@ export default function ResumePreviewPage() {
               </Link>
               <h1 className="text-3xl font-bold text-gray-900">Resume Preview</h1>
             </div>
-            <Link
-              href={`/add-listing?listing_type_id=Resume&edit=${resume.id}`}
-              className="px-5 py-2.5 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold rounded-xl transition-colors shadow-sm"
-            >
-              Edit Resume
-            </Link>
+            <div className="flex gap-3">
+              <button
+                onClick={handleDownloadPDF}
+                disabled={isDownloading}
+                className="px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded-xl transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+              >
+                {isDownloading ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download PDF
+                  </>
+                )}
+              </button>
+              <Link
+                href={`/add-listing?listing_type_id=Resume&edit=${resume.id}`}
+                className="px-5 py-2.5 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold rounded-xl transition-colors shadow-sm"
+              >
+                Edit Resume
+              </Link>
+            </div>
           </div>
 
           {/* Resume Card */}
-          <div className="bg-white border border-gray-200 rounded-3xl p-10 shadow-sm space-y-10">
+          <div id="resume-card" className="bg-white border border-gray-200 rounded-3xl p-10 shadow-sm space-y-10">
 
             {/* Name / Title Banner */}
             <div className="border-b border-gray-100 pb-8">

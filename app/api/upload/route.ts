@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
     const allowedExtensions = ['pdf', 'doc', 'docx'];
     const fileExt = file.name.split('.').pop()?.toLowerCase();
-    
+
     if (!fileExt || !allowedExtensions.includes(fileExt)) {
       return NextResponse.json(
         { error: 'Invalid file type. Only PDF, DOC, and DOCX files are allowed.' },
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     // Then configure with your Supabase credentials in .env:
     // NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
     // NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-    
+
     // For now, return a placeholder URL structure
     // In production, upload to Supabase Storage bucket 'resumes'
     const resumeUrl = `https://your-project.supabase.co/storage/v1/object/public/resumes/${fileName}`;
