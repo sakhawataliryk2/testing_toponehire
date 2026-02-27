@@ -12,7 +12,6 @@ export default function ResumePreviewPage() {
   const [resume, setResume] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
@@ -54,27 +53,24 @@ export default function ResumePreviewPage() {
     try { return JSON.parse(str); } catch { return []; }
   };
 
-  const handleDownloadPDF = async () => {
+  const handleDownloadResumeFile = async (url: string) => {
+    if (!url) return;
     setIsDownloading(true);
     try {
-      const element = document.getElementById('resume-card');
-      if (!element) return;
-
-      // @ts-ignore
-      const html2pdf = (await import('html2pdf.js/dist/html2pdf.min.js')).default;
-
-      const opt = {
-        margin: 10,
-        filename: `${resume.jobSeeker?.firstName || 'Resume'}_${resume.jobSeeker?.lastName || ''}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      await html2pdf().from(element).set(opt).save();
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = url.split('/').pop() || 'Resume_File';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      console.error('Error downloading file:', error);
+      // Fallback to opening directly
+      window.open(url, '_blank');
     } finally {
       setIsDownloading(false);
     }
@@ -134,28 +130,30 @@ export default function ResumePreviewPage() {
               <h1 className="text-3xl font-bold text-gray-900">Resume Preview</h1>
             </div>
             <div className="flex gap-3">
-              <button
-                onClick={handleDownloadPDF}
-                disabled={isDownloading}
-                className="px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded-xl transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
-              >
-                {isDownloading ? (
-                  <>
-                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                    </svg>
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    Download PDF
-                  </>
-                )}
-              </button>
+              {resume.resumeFileUrl && (
+                <button
+                  onClick={() => handleDownloadResumeFile(resume.resumeFileUrl)}
+                  disabled={isDownloading}
+                  className="px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded-xl transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isDownloading ? (
+                    <>
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                      </svg>
+                      Downloading...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      Download Resume File
+                    </>
+                  )}
+                </button>
+              )}
               <Link
                 href={`/add-listing?listing_type_id=Resume&edit=${resume.id}`}
                 className="px-5 py-2.5 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold rounded-xl transition-colors shadow-sm"
@@ -220,14 +218,6 @@ export default function ResumePreviewPage() {
                   <div className="bg-gray-50 rounded-xl p-4">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Category</p>
                     <p className="font-semibold text-gray-900">{categories}</p>
-                  </div>
-                )}
-                {resume.resumeFileUrl && (
-                  <div className="bg-yellow-50 rounded-xl p-4">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-yellow-600 mb-1">Resume File</p>
-                    <button onClick={() => setPreviewFileUrl(resume.resumeFileUrl)} className="font-bold text-yellow-700 hover:underline text-sm text-left">
-                      View PDF ↗
-                    </button>
                   </div>
                 )}
               </div>
@@ -313,10 +303,10 @@ export default function ResumePreviewPage() {
                         <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">{key}</p>
                         {isUrl ? (
                           <button
-                            onClick={() => setPreviewFileUrl(strVal)}
-                            className="font-bold text-yellow-600 hover:underline text-sm text-left"
+                            onClick={() => handleDownloadResumeFile(strVal)}
+                            className="font-bold text-yellow-600 hover:underline text-sm text-left break-all"
                           >
-                            View File ↗
+                            Download File ↓
                           </button>
                         ) : (
                           <p className="font-medium text-gray-900 text-sm">{strVal}</p>
@@ -331,33 +321,6 @@ export default function ResumePreviewPage() {
         </div>
       </div>
       <Footer />
-
-      {/* File Preview Modal */}
-      {previewFileUrl && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex flex-col justify-center items-center p-4 sm:p-8" onClick={() => setPreviewFileUrl(null)}>
-          <div className="relative w-full max-w-6xl h-full max-h-[90vh] bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50">
-              <h3 className="font-bold text-gray-900">File Preview</h3>
-              <div className="flex gap-2">
-                <a href={previewFileUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-bold rounded-lg transition-colors flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                  Open in New Tab
-                </a>
-                <button onClick={() => setPreviewFileUrl(null)} className="p-2 text-gray-500 hover:bg-gray-200 hover:text-gray-900 rounded-lg transition-colors">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              </div>
-            </div>
-            <div className="flex-1 w-full bg-gray-100 relative">
-              <iframe
-                src={previewFileUrl}
-                className="absolute inset-0 w-full h-full border-0"
-                title="File Preview"
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
