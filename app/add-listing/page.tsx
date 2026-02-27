@@ -40,6 +40,7 @@ function CreateResumePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const listingType = searchParams.get('listing_type_id');
+  const returnTo = searchParams.get('returnTo'); // Job page to go back to
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [jobSeeker, setJobSeeker] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -387,8 +388,12 @@ function CreateResumePageContent() {
 
       if (response.ok) {
         recaptchaRef.current?.reset();
-        // Redirect to success page with resume ID
-        router.push(`/manage-listing?id=${data.resume.id}`);
+        // If returnTo is set (e.g. from job application modal), go back there
+        if (returnTo) {
+          router.push(decodeURIComponent(returnTo));
+        } else {
+          router.push(`/manage-listing?id=${data.resume.id}`);
+        }
       } else {
         // Show detailed error message
         const errorMsg = data.details || data.error || 'Failed to create resume';

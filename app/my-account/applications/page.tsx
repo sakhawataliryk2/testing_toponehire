@@ -205,7 +205,7 @@ export default function EmployerApplicationsPage() {
                                                 </td>
                                                 {customFields.map(f => (
                                                     <td key={f.id} className="px-6 py-4 text-gray-600 text-xs font-medium whitespace-nowrap">
-                                                        {app.customFields?.[f.id] || '—'}
+                                                        {app.customFields?.[f.caption] || app.customFields?.[f.id] || '—'}
                                                     </td>
                                                 ))}
                                                 <td className="px-6 py-4">

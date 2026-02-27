@@ -6,6 +6,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params;
     const resume = await prisma.resume.findUnique({
       where: { id },
+      include: {
+        jobSeeker: {
+          select: { firstName: true, lastName: true, email: true }
+        }
+      }
     });
 
     if (!resume) {
