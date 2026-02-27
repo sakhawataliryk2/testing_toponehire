@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
@@ -25,9 +25,10 @@ interface JobDetail {
   status: string;
 }
 
-export default function JobDetailPage() {
+function JobDetailContent() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const id = params?.id as string;
   const [job, setJob] = useState<JobDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,8 +42,16 @@ export default function JobDetailPage() {
     if (auth === 'true' && userData) {
       setIsLoggedIn(true);
       setUser(JSON.parse(userData));
+      // Auto-open modal if coming back from resume creation
+      if (searchParams.get('openModal') === '1') {
+        setIsApplyModalOpen(true);
+        // Clean URL without reload
+        const url = new URL(window.location.href);
+        url.searchParams.delete('openModal');
+        window.history.replaceState({}, '', url.toString());
+      }
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (!id) return;
@@ -169,5 +178,17 @@ export default function JobDetailPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function JobDetailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    }>
+      <JobDetailContent />
+    </Suspense>
   );
 }

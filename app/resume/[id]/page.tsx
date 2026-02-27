@@ -249,14 +249,31 @@ export default function ResumePreviewPage() {
                   Additional Details
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {Object.entries(resume.customFields as Record<string, any>).map(([key, value]) => (
-                    value ? (
+                  {Object.entries(resume.customFields as Record<string, any>).map(([key, value]) => {
+                    // Skip null, undefined, empty, or raw objects (e.g. un-uploaded File objects)
+                    if (!value || typeof value === 'object') return null;
+                    const strVal = String(value);
+                    if (!strVal.trim()) return null;
+                    // Detect if it's a URL (file/image upload)
+                    const isUrl = strVal.startsWith('http://') || strVal.startsWith('https://') || strVal.startsWith('/');
+                    return (
                       <div key={key} className="bg-gray-50 rounded-xl p-4">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">{key}</p>
-                        <p className="font-medium text-gray-900 text-sm">{String(value)}</p>
+                        {isUrl ? (
+                          <a
+                            href={strVal}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-bold text-yellow-600 hover:underline text-sm"
+                          >
+                            View File ↗
+                          </a>
+                        ) : (
+                          <p className="font-medium text-gray-900 text-sm">{strVal}</p>
+                        )}
                       </div>
-                    ) : null
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

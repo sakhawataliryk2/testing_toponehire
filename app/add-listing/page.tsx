@@ -354,10 +354,16 @@ function CreateResumePageContent() {
       phone = phone || formData.phone || '';
       letEmployersFind = formData.letEmployersFind !== undefined ? formData.letEmployersFind : true;
 
-      // Include all custom field values
+      // Include all custom field values (do NOT overwrite already-uploaded file URLs)
       Object.keys(formData).forEach(key => {
         if (key.startsWith('customField_')) {
-          submissionData[key] = formData[key];
+          const val = formData[key];
+          // Skip File objects (they were already uploaded and URL stored in submissionData)
+          if (val instanceof File) return;
+          // Only set if not already set by the file upload step
+          if (submissionData[key] === undefined) {
+            submissionData[key] = val;
+          }
         }
       });
 

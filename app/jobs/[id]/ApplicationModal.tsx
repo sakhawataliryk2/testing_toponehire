@@ -19,8 +19,9 @@ export default function ApplicationModal({ job, user, onClose }: ApplicationModa
     const [formValues, setFormValues] = useState<Record<string, any>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // URL to create a new resume and come back to this job
-    const createResumeUrl = `/add-listing?listing_type_id=Resume&returnTo=${encodeURIComponent(`/jobs/${job.id}`)}`;
+    // URL to create a new resume and come back to this job (with modal auto-open)
+    const createResumeUrl = `/add-listing?listing_type_id=Resume&returnTo=${encodeURIComponent(`/jobs/${job.id}?openModal=1`)}`;
+
 
     // Fetch resumes
     useEffect(() => {
