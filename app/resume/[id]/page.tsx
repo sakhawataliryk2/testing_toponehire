@@ -12,6 +12,7 @@ export default function ResumePreviewPage() {
   const [resume, setResume] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (resumeId) fetchResume();
@@ -173,9 +174,9 @@ export default function ResumePreviewPage() {
                 {resume.resumeFileUrl && (
                   <div className="bg-yellow-50 rounded-xl p-4">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-yellow-600 mb-1">Resume File</p>
-                    <a href={resume.resumeFileUrl} target="_blank" rel="noopener noreferrer" className="font-bold text-yellow-700 hover:underline text-sm">
+                    <button onClick={() => setPreviewFileUrl(resume.resumeFileUrl)} className="font-bold text-yellow-700 hover:underline text-sm text-left">
                       View PDF ↗
-                    </a>
+                    </button>
                   </div>
                 )}
               </div>
@@ -260,14 +261,12 @@ export default function ResumePreviewPage() {
                       <div key={key} className="bg-gray-50 rounded-xl p-4">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">{key}</p>
                         {isUrl ? (
-                          <a
-                            href={strVal}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="font-bold text-yellow-600 hover:underline text-sm"
+                          <button
+                            onClick={() => setPreviewFileUrl(strVal)}
+                            className="font-bold text-yellow-600 hover:underline text-sm text-left"
                           >
                             View File ↗
-                          </a>
+                          </button>
                         ) : (
                           <p className="font-medium text-gray-900 text-sm">{strVal}</p>
                         )}
@@ -281,6 +280,33 @@ export default function ResumePreviewPage() {
         </div>
       </div>
       <Footer />
+
+      {/* File Preview Modal */}
+      {previewFileUrl && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex flex-col justify-center items-center p-4 sm:p-8" onClick={() => setPreviewFileUrl(null)}>
+          <div className="relative w-full max-w-6xl h-full max-h-[90vh] bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50">
+              <h3 className="font-bold text-gray-900">File Preview</h3>
+              <div className="flex gap-2">
+                <a href={previewFileUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-bold rounded-lg transition-colors flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                  Open in New Tab
+                </a>
+                <button onClick={() => setPreviewFileUrl(null)} className="p-2 text-gray-500 hover:bg-gray-200 hover:text-gray-900 rounded-lg transition-colors">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 w-full bg-gray-100 relative">
+              <iframe
+                src={previewFileUrl}
+                className="absolute inset-0 w-full h-full border-0"
+                title="File Preview"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

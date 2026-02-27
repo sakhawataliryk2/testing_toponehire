@@ -41,6 +41,7 @@ function CreateResumePageContent() {
   const searchParams = useSearchParams();
   const listingType = searchParams.get('listing_type_id');
   const returnTo = searchParams.get('returnTo'); // Job page to go back to
+  const editResumeId = searchParams.get('edit'); // Resume ID to edit
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [jobSeeker, setJobSeeker] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -91,17 +92,20 @@ function CreateResumePageContent() {
     }
   }, [router]);
 
-  // Fetch custom fields for RESUME context
+  // Fetch custom fields for RESUME context and existing resume data
   useEffect(() => {
-    async function fetchCustomFields() {
+    async function fetchData() {
       try {
+        setLoadingFields(true);
         const res = await fetch('/api/custom-fields?context=RESUME');
         const data = await res.json();
-        if (data.fields) {
-          setCustomFields(data.fields);
+        const fetchedFields = data.fields || [];
+        const initialData: Record<string, any> = {};
+
+        if (fetchedFields.length > 0) {
+          setCustomFields(fetchedFields);
           // Initialize form data for custom fields
-          const initialData: Record<string, any> = {};
-          data.fields.forEach((field: CustomField) => {
+          fetchedFields.forEach((field: CustomField) => {
             const fieldKey = `customField_${field.id}`;
             if (field.type === 'CHECKBOX') {
               initialData[fieldKey] = false;
@@ -111,18 +115,68 @@ function CreateResumePageContent() {
               initialData[fieldKey] = '';
             }
           });
+        }
+
+        if (editResumeId) {
+          const resRes = await fetch(`/api/resumes/${editResumeId}`);
+          if (resRes.ok) {
+            const resData = await resRes.json();
+            const resume = resData.resume;
+            if (resume) {
+              const resumeData: any = {
+                desiredJobTitle: resume.desiredJobTitle || '',
+                jobType: resume.jobType || '',
+                categories: resume.categories || '',
+                personalSummary: resume.personalSummary || '',
+                location: resume.location || '',
+                phone: resume.phone || '',
+                letEmployersFind: resume.letEmployersFind ?? true,
+              };
+
+              // Map custom fields JSON to form fields using caption
+              if (fetchedFields.length > 0 && resume.customFields) {
+                fetchedFields.forEach((field: CustomField) => {
+                  const val = resume.customFields[field.caption];
+                  if (val !== undefined) {
+                    resumeData[`customField_${field.id}`] = val;
+                  }
+                });
+              }
+
+              // Map standard fields backup
+              if (fetchedFields.length > 0) {
+                fetchedFields.forEach((field: CustomField) => {
+                  const captionLower = field.caption.toLowerCase();
+                  if (captionLower.includes('desired') && captionLower.includes('job') && captionLower.includes('title') && resume.desiredJobTitle) resumeData[`customField_${field.id}`] = resume.desiredJobTitle;
+                  else if (captionLower.includes('job') && captionLower.includes('type') && resume.jobType) resumeData[`customField_${field.id}`] = resume.jobType;
+                  else if (captionLower.includes('categor') && resume.categories) resumeData[`customField_${field.id}`] = resume.categories;
+                  else if (captionLower.includes('personal') && captionLower.includes('summary') && resume.personalSummary) resumeData[`customField_${field.id}`] = resume.personalSummary;
+                  else if (captionLower.includes('location') && resume.location) resumeData[`customField_${field.id}`] = resume.location;
+                  else if (captionLower.includes('phone') && resume.phone) resumeData[`customField_${field.id}`] = resume.phone;
+                });
+              }
+
+              setFormData(prev => ({ ...prev, ...initialData, ...resumeData }));
+
+              if (resume.workExperience) setWorkExperiences(JSON.parse(resume.workExperience));
+              if (resume.education) setEducations(JSON.parse(resume.education));
+              if (resume.resumeFileUrl) setResumeFileUrl(resume.resumeFileUrl);
+            }
+          }
+        } else {
           setFormData(prev => ({ ...prev, ...initialData }));
         }
       } catch (error) {
-        console.error('Error fetching custom fields:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoadingFields(false);
       }
     }
+
     if (isAuthenticated && listingType === 'Resume') {
-      fetchCustomFields();
+      fetchData();
     }
-  }, [isAuthenticated, listingType]);
+  }, [isAuthenticated, listingType, editResumeId]);
 
   // Close categories dropdown when clicking outside
   useEffect(() => {
@@ -367,8 +421,11 @@ function CreateResumePageContent() {
         }
       });
 
-      const response = await fetch('/api/resumes', {
-        method: 'POST',
+      const requestUrl = editResumeId ? `/api/resumes/${editResumeId}` : '/api/resumes';
+      const requestMethod = editResumeId ? 'PUT' : 'POST';
+
+      const response = await fetch(requestUrl, {
+        method: requestMethod,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -402,13 +459,13 @@ function CreateResumePageContent() {
         }
       } else {
         // Show detailed error message
-        const errorMsg = data.details || data.error || 'Failed to create resume';
+        const errorMsg = data.details || data.error || (editResumeId ? 'Failed to update resume' : 'Failed to create resume');
         alert(`Error: ${errorMsg}${data.details ? `\n\nDetails: ${data.details}` : ''}`);
-        console.error('Resume creation error:', data);
+        console.error('Resume submission error:', data);
       }
     } catch (error) {
-      console.error('Error creating resume:', error);
-      alert('An error occurred while creating the resume');
+      console.error('Error submitting resume:', error);
+      alert(`An error occurred while ${editResumeId ? 'updating' : 'creating'} the resume`);
     } finally {
       setLoading(false);
     }
@@ -435,7 +492,7 @@ function CreateResumePageContent() {
       <Header />
       <div className="container mx-auto px-4 md:px-12 lg:px-16 xl:px-24 2xl:px-32 py-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-8" style={{ fontFamily: 'serif' }}>
-          Create New Resume
+          {editResumeId ? 'Edit Resume' : 'Create New Resume'}
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -503,7 +560,7 @@ function CreateResumePageContent() {
               disabled={loading}
               className="px-12 py-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-lg rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'POSTING...' : 'POST'}
+              {loading ? (editResumeId ? 'UPDATING...' : 'POSTING...') : (editResumeId ? 'UPDATE' : 'POST')}
             </button>
           </div>
         </form>
