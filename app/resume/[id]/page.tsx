@@ -13,6 +13,7 @@ export default function ResumePreviewPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (resumeId) fetchResume();
@@ -131,28 +132,40 @@ export default function ResumePreviewPage() {
             </div>
             <div className="flex gap-3">
               {resume.resumeFileUrl && (
-                <button
-                  onClick={() => handleDownloadResumeFile(resume.resumeFileUrl)}
-                  disabled={isDownloading}
-                  className="px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded-xl transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
-                >
-                  {isDownloading ? (
-                    <>
-                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                      </svg>
-                      Downloading...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                      Download Resume File
-                    </>
-                  )}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPreviewFileUrl(resume.resumeFileUrl)}
+                    className="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-900 font-bold rounded-xl transition-colors shadow-sm flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    View File
+                  </button>
+                  <button
+                    onClick={() => handleDownloadResumeFile(resume.resumeFileUrl)}
+                    disabled={isDownloading}
+                    className="px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded-xl transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isDownloading ? (
+                      <>
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                        </svg>
+                        Downloading...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download File
+                      </>
+                    )}
+                  </button>
+                </div>
               )}
               <Link
                 href={`/add-listing?listing_type_id=Resume&edit=${resume.id}`}
@@ -302,12 +315,22 @@ export default function ResumePreviewPage() {
                       <div key={key} className="bg-gray-50 rounded-xl p-4">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">{key}</p>
                         {isUrl ? (
-                          <button
-                            onClick={() => handleDownloadResumeFile(strVal)}
-                            className="font-bold text-yellow-600 hover:underline text-sm text-left break-all"
-                          >
-                            Download File ↓
-                          </button>
+                          <div className="flex flex-col gap-2 mt-2">
+                            <button
+                              onClick={() => setPreviewFileUrl(strVal)}
+                              className="font-bold text-yellow-600 hover:underline text-sm text-left flex items-center gap-1"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                              View File ↗
+                            </button>
+                            <button
+                              onClick={() => handleDownloadResumeFile(strVal)}
+                              className="font-bold text-gray-600 hover:underline text-sm text-left flex items-center gap-1 break-all"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                              Download File ↓
+                            </button>
+                          </div>
                         ) : (
                           <p className="font-medium text-gray-900 text-sm">{strVal}</p>
                         )}
@@ -321,6 +344,51 @@ export default function ResumePreviewPage() {
         </div>
       </div>
       <Footer />
+
+      {/* File Preview Modal */}
+      {previewFileUrl && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex flex-col justify-center items-center p-4 sm:p-8" onClick={() => setPreviewFileUrl(null)}>
+          <div className="relative w-full max-w-6xl h-full max-h-[90vh] bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50">
+              <h3 className="font-bold text-gray-900">File Preview</h3>
+              <div className="flex gap-2 items-center">
+                <a href={previewFileUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-bold rounded-lg transition-colors flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                  Open in New Tab
+                </a>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownloadResumeFile(previewFileUrl);
+                  }}
+                  disabled={isDownloading}
+                  className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isDownloading ? (
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                  )}
+                  {isDownloading ? 'Downloading...' : 'Download File'}
+                </button>
+                <button onClick={() => setPreviewFileUrl(null)} className="p-2 ml-2 text-gray-500 hover:bg-gray-200 hover:text-gray-900 rounded-lg transition-colors">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 w-full bg-gray-100 relative">
+              <iframe
+                src={previewFileUrl}
+                className="absolute inset-0 w-full h-full border-0"
+                title="File Preview"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

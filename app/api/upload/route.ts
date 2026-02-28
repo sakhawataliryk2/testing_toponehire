@@ -38,22 +38,60 @@ export async function POST(request: NextRequest) {
     // Generate unique filename
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 15);
-    const fileName = `${folder}/${timestamp}-${randomString}.${fileExt}`;
+    const fileName = `${timestamp}-${randomString}.${fileExt}`;
 
-    // TODO: Upload to Supabase Storage
-    // To enable file uploads, install @supabase/supabase-js:
-    // npm install @supabase/supabase-js
-    // Then configure with your Supabase credentials in .env:
-    // NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-    // NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+    let fileUrl = '';
 
-    // For now, return a placeholder URL structure
-    // In production, upload to Supabase Storage bucket 'resumes'
-    const resumeUrl = `https://your-project.supabase.co/storage/v1/object/public/resumes/${fileName}`;
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_url') {
+      // Upload to Supabase Storage if configured
+      const { createClient } = require('@supabase/supabase-js');
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+      if (!supabaseKey) {
+        throw new Error('Supabase URL is defined, but no valid API Key (anon/service_role) was found in environment variables.');
+      }
+
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
+      // Attempt to use 'resumes' as fallback bucket name if no folder provided
+      const bucketName = 'resumes';
+      const supabaseFilePath = `${folder}/${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from(bucketName)
+        .upload(supabaseFilePath, buffer, {
+          contentType: file.type,
+          upsert: true,
+        });
+
+      if (error) {
+        console.error('Supabase upload error:', error);
+        throw new Error(`Supabase upload failed: ${error.message}`);
+      }
+
+      const { data: urlData } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(supabaseFilePath);
+
+      fileUrl = urlData.publicUrl;
+    } else {
+      // Upload to local storage (public directory)
+      const path = require('path');
+      const { writeFile, mkdir } = require('fs/promises');
+
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads', folder);
+      await mkdir(uploadDir, { recursive: true });
+
+      const filePath = path.join(uploadDir, fileName);
+      await writeFile(filePath, buffer);
+
+      fileUrl = `/uploads/${folder}/${fileName}`;
+    }
 
     return NextResponse.json({
       success: true,
-      url: resumeUrl,
+      url: fileUrl,
       fileName: fileName,
     });
   } catch (error: any) {
