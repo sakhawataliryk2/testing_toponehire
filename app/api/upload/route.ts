@@ -42,51 +42,67 @@ export async function POST(request: NextRequest) {
 
     let fileUrl = '';
 
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_url') {
-      // Upload to Supabase Storage if configured
-      const { createClient } = require('@supabase/supabase-js');
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    // ALWAYS DEFAULT to Local Upload in Development to avoid crashes
+    // Only attempt external upload if EXPLICITLY triggered and keys are present
+    const isVercel = process.env.VERCEL === '1';
 
-      if (!supabaseKey) {
-        throw new Error('Supabase URL is defined, but no valid API Key (anon/service_role) was found in environment variables.');
+    // We remove Supabase as the default to prevent crashes when keys are missing on Vercel
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_url' && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      try {
+        const { createClient } = require('@supabase/supabase-js');
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL,
+          process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        );
+
+        const bucketName = 'resumes';
+        const supabaseFilePath = `${folder}/${fileName}`;
+
+        const { data, error } = await supabase.storage
+          .from(bucketName)
+          .upload(supabaseFilePath, buffer, {
+            contentType: file.type,
+            upsert: true,
+          });
+
+        if (error) throw new Error(`Supabase upload failed: ${error.message}`);
+
+        const { data: urlData } = supabase.storage
+          .from(bucketName)
+          .getPublicUrl(supabaseFilePath);
+
+        fileUrl = urlData.publicUrl;
+      } catch (err: any) {
+        console.error('External upload failed, attempting fallback...', err);
+        // Don't throw error, continue to local fallback
       }
+    }
 
-      const supabase = createClient(supabaseUrl, supabaseKey);
+    // If Supabase failed or not configured, use local fallback
+    if (!fileUrl) {
+      try {
+        const path = require('path');
+        const { writeFile, mkdir } = require('fs/promises');
 
-      // Attempt to use 'resumes' as fallback bucket name if no folder provided
-      const bucketName = 'resumes';
-      const supabaseFilePath = `${folder}/${fileName}`;
+        let uploadDir;
+        if (isVercel) {
+          // Vercel deployment directory workaround (writes to /tmp)
+          uploadDir = path.join('/tmp', folder);
+          fileUrl = `/api/upload/read?file=${fileName}&folder=${folder}`; // Requires a custom reader route
+        } else {
+          // Local PC Dev Environment
+          uploadDir = path.join(process.cwd(), 'public', 'uploads', folder);
+          fileUrl = `/uploads/${folder}/${fileName}`;
+        }
 
-      const { data, error } = await supabase.storage
-        .from(bucketName)
-        .upload(supabaseFilePath, buffer, {
-          contentType: file.type,
-          upsert: true,
-        });
+        await mkdir(uploadDir, { recursive: true });
+        const filePath = path.join(uploadDir, fileName);
+        await writeFile(filePath, buffer);
 
-      if (error) {
-        console.error('Supabase upload error:', error);
-        throw new Error(`Supabase upload failed: ${error.message}`);
+      } catch (localErr: any) {
+        console.error('Local upload failed:', localErr);
+        throw new Error(`Local write failed: ${localErr.message}`);
       }
-
-      const { data: urlData } = supabase.storage
-        .from(bucketName)
-        .getPublicUrl(supabaseFilePath);
-
-      fileUrl = urlData.publicUrl;
-    } else {
-      // Upload to local storage (public directory)
-      const path = require('path');
-      const { writeFile, mkdir } = require('fs/promises');
-
-      const uploadDir = path.join(process.cwd(), 'public', 'uploads', folder);
-      await mkdir(uploadDir, { recursive: true });
-
-      const filePath = path.join(uploadDir, fileName);
-      await writeFile(filePath, buffer);
-
-      fileUrl = `/uploads/${folder}/${fileName}`;
     }
 
     return NextResponse.json({
@@ -97,7 +113,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Error uploading file:', error);
     return NextResponse.json(
-      { error: 'Failed to upload file', details: error?.message },
+      { error: 'Failed to upload file', details: error?.message || 'Unknown server error' },
       { status: 500 }
     );
   }
