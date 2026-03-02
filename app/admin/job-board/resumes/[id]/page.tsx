@@ -26,6 +26,7 @@ export default function ResumeDetailsPage({ params }: { params: Promise<{ id: st
         try {
             const res = await fetch(`/api/admin/resumes/${id}`);
             const data = await res.json();
+            console.log('Resume data:', data); // Debug log
             if (data.resume) {
                 setResume(data.resume);
             } else {
@@ -175,6 +176,12 @@ export default function ResumeDetailsPage({ params }: { params: Promise<{ id: st
 
                             {resume.resumeFileUrl && (
                                 <div className="pt-4 border-t border-gray-100 text-center">
+                                    <div className="mb-4">
+                                        <p className="text-sm text-gray-600 mb-2">Debug: File URL</p>
+                                        <code className="text-xs bg-gray-100 p-2 block rounded">
+                                            {resume.resumeFileUrl}
+                                        </code>
+                                    </div>
                                     <a
                                         href={resume.resumeFileUrl}
                                         target="_blank"
@@ -186,6 +193,12 @@ export default function ResumeDetailsPage({ params }: { params: Promise<{ id: st
                                         </svg>
                                         Download Resume File
                                     </a>
+                                </div>
+                            )}
+
+                            {!resume.resumeFileUrl && (
+                                <div className="pt-4 border-t border-gray-100 text-center">
+                                    <p className="text-gray-500 text-sm">No resume file uploaded</p>
                                 </div>
                             )}
                         </div>
