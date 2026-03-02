@@ -82,13 +82,18 @@ function CreateResumePageContent() {
       router.push('/login');
     } else {
       setIsAuthenticated(true);
-      const user = JSON.parse(jobSeekerData);
-      setJobSeeker(user);
-      setFormData((prev) => ({
-        ...prev,
-        phone: user.phone || '',
-        location: user.location || '',
-      }));
+      try {
+        const user = JSON.parse(jobSeekerData);
+        setJobSeeker(user);
+        setFormData((prev) => ({
+          ...prev,
+          phone: user.phone || '',
+          location: user.location || '',
+        }));
+      } catch (error) {
+        console.error('Error parsing job seeker data:', error);
+        router.push('/login');
+      }
     }
   }, [router]);
 
@@ -158,8 +163,12 @@ function CreateResumePageContent() {
 
               setFormData(prev => ({ ...prev, ...initialData, ...resumeData }));
 
-              if (resume.workExperience) setWorkExperiences(JSON.parse(resume.workExperience));
-              if (resume.education) setEducations(JSON.parse(resume.education));
+              try {
+                if (resume.workExperience) setWorkExperiences(JSON.parse(resume.workExperience));
+                if (resume.education) setEducations(JSON.parse(resume.education));
+              } catch (error) {
+                console.error('Error parsing resume data:', error);
+              }
               if (resume.resumeFileUrl) setResumeFileUrl(resume.resumeFileUrl);
             }
           }
