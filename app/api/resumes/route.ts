@@ -183,7 +183,11 @@ export async function POST(request: NextRequest) {
       // Schema might not have these fields yet, that's okay
     }
 
-    console.log('Creating resume with data:', { ...resumeData, workExperience: '...', education: '...' });
+    console.log('Creating resume with data:', { 
+      ...resumeData, 
+      resumeFileUrl: resumeData.resumeFileUrl,
+      bodyResumeFileUrl: resumeFileUrl 
+    });
 
     const resume = await prisma.resume.create({
       data: resumeData,
