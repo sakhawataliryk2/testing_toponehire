@@ -12,6 +12,7 @@ export default function MyResumesPage() {
   const [jobSeeker, setJobSeeker] = useState<any>(null);
   const [resumes, setResumes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     const auth = localStorage.getItem('jobSeekerAuth');
@@ -48,6 +49,24 @@ export default function MyResumesPage() {
       day: 'numeric',
       year: 'numeric',
     }).toUpperCase();
+  };
+
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) return;
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/resumes/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setResumes(prev => prev.filter(r => r.id !== id));
+      } else {
+        alert('Failed to delete resume. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error deleting resume:', error);
+      alert('An error occurred. Please try again.');
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   if (loading) {
@@ -168,6 +187,28 @@ export default function MyResumesPage() {
                         >
                           Edit
                         </Link>
+                        <button
+                          onClick={() => handleDelete(resume.id, resume.desiredJobTitle)}
+                          disabled={deletingId === resume.id}
+                          className="px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-sm font-medium disabled:opacity-50 flex items-center gap-1.5"
+                        >
+                          {deletingId === resume.id ? (
+                            <>
+                              <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                              </svg>
+                              Deleting...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                              Delete
+                            </>
+                          )}
+                        </button>
                       </div>
                     </div>
                   </div>
