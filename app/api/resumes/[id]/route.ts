@@ -50,6 +50,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const extraCustomFields: Record<string, any> = {};
     const standardFieldsSet = new Set(['desiredjobtitle', 'jobtype', 'categories', 'personalsummary', 'location', 'phone', 'letemployersfind', 'resumefileurl', 'workexperience', 'education']);
 
+    // Auto-detect resume file URL from FILE/PICTURE type custom fields
+    let autoDetectedResumeFileUrl: string | null = null;
+
     for (const field of customFieldsConfig) {
       const fieldKey = `customField_${field.id}`;
       const value = body[fieldKey];
@@ -58,12 +61,27 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       if (value !== undefined && !standardFieldsSet.has(captionLower)) {
         extraCustomFields[field.caption] = value;
       }
+
+      // Auto-detect resume file URL from FILE/PICTURE type fields with 'resume' or 'upload' in caption
+      if (
+        (field.type === 'FILE' || field.type === 'PICTURE') &&
+        typeof value === 'string' &&
+        value.trim() !== '' &&
+        (field.caption.toLowerCase().includes('resume') || field.caption.toLowerCase().includes('upload'))
+      ) {
+        autoDetectedResumeFileUrl = value;
+      }
     }
+
+    // Determine final resumeFileUrl: use explicitly provided value first, then auto-detected
+    const finalResumeFileUrl = (resumeFileUrl !== undefined && resumeFileUrl !== null && resumeFileUrl.trim() !== '')
+      ? resumeFileUrl
+      : (autoDetectedResumeFileUrl ?? resumeFileUrl);
 
     const resume = await prisma.resume.update({
       where: { id },
       data: {
-        resumeFileUrl: resumeFileUrl !== undefined ? resumeFileUrl : undefined,
+        resumeFileUrl: finalResumeFileUrl !== undefined ? finalResumeFileUrl : undefined,
         desiredJobTitle: desiredJobTitle || undefined,
         jobType: jobType || undefined,
         categories: categories || undefined,

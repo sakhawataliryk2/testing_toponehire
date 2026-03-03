@@ -145,6 +145,9 @@ export async function POST(request: NextRequest) {
     const extraCustomFields: Record<string, any> = {};
     const standardFieldsSet = new Set(['desiredjobtitle', 'jobtype', 'categories', 'personalsummary', 'location', 'phone', 'letemployersfind']);
 
+    // Also try to auto-detect the resume file URL from custom fields
+    let autoDetectedResumeFileUrl: string | null = null;
+
     for (const field of customFields) {
       const fieldKey = `customField_${field.id}`;
       const value = body[fieldKey];
@@ -153,12 +156,28 @@ export async function POST(request: NextRequest) {
       if (value !== undefined && !standardFieldsSet.has(captionLower)) {
         extraCustomFields[field.caption] = value;
       }
+
+      // Auto-detect resume file URL from FILE/PICTURE type custom fields
+      // whose caption contains 'resume' or 'upload'
+      if (
+        (field.type === 'FILE' || field.type === 'PICTURE') &&
+        typeof value === 'string' &&
+        value.trim() !== '' &&
+        (field.caption.toLowerCase().includes('resume') || field.caption.toLowerCase().includes('upload'))
+      ) {
+        autoDetectedResumeFileUrl = value;
+      }
     }
+
+    // Use explicitly provided resumeFileUrl first, then fall back to auto-detected one from custom fields
+    const finalResumeFileUrl = (resumeFileUrl && resumeFileUrl.trim() !== '')
+      ? resumeFileUrl
+      : autoDetectedResumeFileUrl;
 
     // Prepare resume data - file upload is optional
     const resumeData: any = {
       jobSeekerId,
-      resumeFileUrl: resumeFileUrl && resumeFileUrl.trim() !== '' ? resumeFileUrl : null,
+      resumeFileUrl: finalResumeFileUrl,
       desiredJobTitle: finalDesiredJobTitle,
       jobType: finalJobType,
       categories: finalCategories,
@@ -183,10 +202,10 @@ export async function POST(request: NextRequest) {
       // Schema might not have these fields yet, that's okay
     }
 
-    console.log('Creating resume with data:', { 
-      ...resumeData, 
+    console.log('Creating resume with data:', {
+      ...resumeData,
       resumeFileUrl: resumeData.resumeFileUrl,
-      bodyResumeFileUrl: resumeFileUrl 
+      bodyResumeFileUrl: resumeFileUrl
     });
 
     const resume = await prisma.resume.create({
