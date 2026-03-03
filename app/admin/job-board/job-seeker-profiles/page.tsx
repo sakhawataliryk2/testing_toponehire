@@ -303,7 +303,7 @@ export default function JobSeekerProfilesPage() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-4 py-3 text-left">
+                  <th className="px-4 py-3 text-left whitespace-nowrap">
                     <input
                       type="checkbox"
                       checked={selectedJobSeekers.length === sortedJobSeekers.length && sortedJobSeekers.length > 0}
@@ -311,7 +311,7 @@ export default function JobSeekerProfilesPage() {
                       className="rounded"
                     />
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">
                     <button
                       onClick={() => handleSort('email')}
                       className="flex items-center gap-1 hover:text-blue-600"
@@ -329,7 +329,7 @@ export default function JobSeekerProfilesPage() {
                       )}
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">
                     <button
                       onClick={() => handleSort('firstName')}
                       className="flex items-center gap-1 hover:text-blue-600"
@@ -347,7 +347,7 @@ export default function JobSeekerProfilesPage() {
                       )}
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">
                     <button
                       onClick={() => handleSort('lastName')}
                       className="flex items-center gap-1 hover:text-blue-600"
@@ -365,7 +365,7 @@ export default function JobSeekerProfilesPage() {
                       )}
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">
                     <button
                       onClick={() => handleSort('phone')}
                       className="flex items-center gap-1 hover:text-blue-600"
@@ -383,7 +383,7 @@ export default function JobSeekerProfilesPage() {
                       )}
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">
                     <button
                       onClick={() => handleSort('location')}
                       className="flex items-center gap-1 hover:text-blue-600"
@@ -401,7 +401,7 @@ export default function JobSeekerProfilesPage() {
                       )}
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">
                     <button
                       onClick={() => handleSort('createdAt')}
                       className="flex items-center gap-1 hover:text-blue-600"
@@ -419,7 +419,7 @@ export default function JobSeekerProfilesPage() {
                       )}
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap sticky right-0 bg-gray-50 shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)]">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -446,13 +446,13 @@ export default function JobSeekerProfilesPage() {
                           className="rounded"
                         />
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{jobSeeker.email}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{jobSeeker.firstName}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{jobSeeker.lastName}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{jobSeeker.phone || <span className="text-gray-400">-</span>}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{jobSeeker.location || <span className="text-gray-400">-</span>}</td>
-                      <td className="px-4 py-3 text-sm text-gray-500">{jobSeeker.createdAt}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">{jobSeeker.email}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">{jobSeeker.firstName}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">{jobSeeker.lastName}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">{jobSeeker.phone || <span className="text-gray-400">-</span>}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">{jobSeeker.location || <span className="text-gray-400">-</span>}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">{jobSeeker.createdAt}</td>
+                      <td className="px-4 py-3 sticky right-0 bg-white shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)] group-hover:bg-gray-50">
                         <div className="flex items-center gap-2">
                           <Link
                             href={`/admin/job-board/job-seeker-profiles/${jobSeeker.id}`}

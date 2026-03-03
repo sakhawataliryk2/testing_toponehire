@@ -306,7 +306,7 @@ export default function EmployerProfilesPage() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-4 py-3 text-left">
+                  <th className="px-4 py-3 text-left whitespace-nowrap">
                     <input
                       type="checkbox"
                       checked={selectedEmployers.length === sortedEmployers.length && sortedEmployers.length > 0}
@@ -314,7 +314,7 @@ export default function EmployerProfilesPage() {
                       className="rounded"
                     />
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">
                     <button
                       onClick={() => handleSort('email')}
                       className="flex items-center gap-1 hover:text-blue-600"
@@ -332,7 +332,7 @@ export default function EmployerProfilesPage() {
                       )}
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">
                     <button
                       onClick={() => handleSort('fullName')}
                       className="flex items-center gap-1 hover:text-blue-600"
@@ -350,7 +350,7 @@ export default function EmployerProfilesPage() {
                       )}
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">
                     <button
                       onClick={() => handleSort('companyName')}
                       className="flex items-center gap-1 hover:text-blue-600"
@@ -368,7 +368,7 @@ export default function EmployerProfilesPage() {
                       )}
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">
                     <button
                       onClick={() => handleSort('phone')}
                       className="flex items-center gap-1 hover:text-blue-600"
@@ -386,7 +386,7 @@ export default function EmployerProfilesPage() {
                       )}
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">
                     <button
                       onClick={() => handleSort('location')}
                       className="flex items-center gap-1 hover:text-blue-600"
@@ -404,7 +404,7 @@ export default function EmployerProfilesPage() {
                       )}
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">
                     <button
                       onClick={() => handleSort('website')}
                       className="flex items-center gap-1 hover:text-blue-600"
@@ -422,7 +422,7 @@ export default function EmployerProfilesPage() {
                       )}
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">
                     <button
                       onClick={() => handleSort('createdAt')}
                       className="flex items-center gap-1 hover:text-blue-600"
@@ -440,7 +440,7 @@ export default function EmployerProfilesPage() {
                       )}
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap sticky right-0 bg-gray-50 shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)]">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -467,12 +467,12 @@ export default function EmployerProfilesPage() {
                           className="rounded"
                         />
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{employer.email}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{employer.fullName}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{employer.companyName}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{employer.phone}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{employer.location}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
+                      <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">{employer.email}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">{employer.fullName}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">{employer.companyName}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">{employer.phone}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">{employer.location}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">
                         {employer.website ? (
                           <a
                             href={employer.website.startsWith('http') ? employer.website : `https://${employer.website}`}
@@ -486,8 +486,8 @@ export default function EmployerProfilesPage() {
                           <span className="text-gray-400">-</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-500">{employer.createdAt}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">{employer.createdAt}</td>
+                      <td className="px-4 py-3 sticky right-0 bg-white shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)] group-hover:bg-gray-50">
                         <div className="flex items-center gap-2">
                           <Link
                             href={`/admin/job-board/employer-profiles/${employer.id}`}

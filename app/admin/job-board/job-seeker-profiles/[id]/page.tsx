@@ -18,6 +18,9 @@ export default function EditJobSeekerPage() {
     lastName: '',
     phone: '',
     location: '',
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
   });
 
   useEffect(() => {
@@ -36,13 +39,14 @@ export default function EditJobSeekerPage() {
         const response = await fetch(`/api/job-seekers/${jobSeekerId}`);
         const data = await response.json();
         if (data.jobSeeker) {
-          setFormData({
+          setFormData((prev) => ({
+            ...prev,
             email: data.jobSeeker.email || '',
             firstName: data.jobSeeker.firstName || '',
             lastName: data.jobSeeker.lastName || '',
             phone: data.jobSeeker.phone || '',
             location: data.jobSeeker.location || '',
-          });
+          }));
         }
       } catch (error) {
         console.error('Error fetching job seeker:', error);
@@ -67,6 +71,22 @@ export default function EditJobSeekerPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (formData.newPassword || formData.currentPassword || formData.confirmPassword) {
+      if (!formData.currentPassword) {
+        alert('Please enter the current password to change it');
+        return;
+      }
+      if (formData.newPassword !== formData.confirmPassword) {
+        alert('New passwords do not match');
+        return;
+      }
+      if (formData.newPassword.length < 6) {
+        alert('New password must be at least 6 characters long');
+        return;
+      }
+    }
+
     setSaving(true);
 
     try {
@@ -80,6 +100,8 @@ export default function EditJobSeekerPage() {
           lastName: formData.lastName,
           phone: formData.phone || null,
           location: formData.location || null,
+          currentPassword: formData.currentPassword || undefined,
+          newPassword: formData.newPassword || undefined,
         }),
       });
 
@@ -195,6 +217,63 @@ export default function EditJobSeekerPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+          </div>
+
+          <div className="mb-8 p-6 bg-gray-50 rounded-xl border border-gray-200">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Change Password
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label htmlFor="currentPassword" title="Enter current password to verify identity" className="block text-sm font-medium text-gray-700 mb-2">
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  id="currentPassword"
+                  name="currentPassword"
+                  value={formData.currentPassword}
+                  onChange={handleInputChange}
+                  placeholder="Required for change"
+                  autoComplete="new-password"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="newPassword" title="At least 6 characters" className="block text-sm font-medium text-gray-700 mb-2">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  id="newPassword"
+                  name="newPassword"
+                  value={formData.newPassword}
+                  onChange={handleInputChange}
+                  placeholder="Min. 6 characters"
+                  autoComplete="new-password"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="confirmPassword" title="Repeat new password" className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  placeholder="Match new password"
+                  autoComplete="new-password"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-4 italic">Leave password fields blank if you do not want to change the password.</p>
           </div>
 
           <div className="flex justify-end gap-3">
