@@ -37,7 +37,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params;
     const body = await request.json();
-    const { companyName, website, location, phone, companyDescription, currentPassword, newPassword } = body;
+    const { companyName, website, location, phone, companyDescription, newPassword } = body;
 
     const existing = await prisma.employer.findUnique({ where: { id } });
     if (!existing) {
@@ -52,11 +52,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       companyDescription: companyDescription || undefined,
     };
 
-    if (currentPassword != null && newPassword != null && newPassword.trim() !== '') {
-      const valid = await bcrypt.compare(currentPassword, existing.password);
-      if (!valid) {
-        return NextResponse.json({ error: 'Current password is incorrect' }, { status: 400 });
-      }
+    if (newPassword != null && newPassword.trim() !== '') {
       updateData.password = await bcrypt.hash(newPassword.trim(), 10);
     }
 

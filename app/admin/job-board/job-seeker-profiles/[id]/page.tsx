@@ -18,7 +18,6 @@ export default function EditJobSeekerPage() {
     lastName: '',
     phone: '',
     location: '',
-    currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
@@ -72,11 +71,7 @@ export default function EditJobSeekerPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (formData.newPassword || formData.currentPassword || formData.confirmPassword) {
-      if (!formData.currentPassword) {
-        alert('Please enter the current password to change it');
-        return;
-      }
+    if (formData.newPassword || formData.confirmPassword) {
       if (formData.newPassword !== formData.confirmPassword) {
         alert('New passwords do not match');
         return;
@@ -100,7 +95,6 @@ export default function EditJobSeekerPage() {
           lastName: formData.lastName,
           phone: formData.phone || null,
           location: formData.location || null,
-          currentPassword: formData.currentPassword || undefined,
           newPassword: formData.newPassword || undefined,
         }),
       });
@@ -226,22 +220,7 @@ export default function EditJobSeekerPage() {
               </svg>
               Change Password
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label htmlFor="currentPassword" title="Enter current password to verify identity" className="block text-sm font-medium text-gray-700 mb-2">
-                  Current Password
-                </label>
-                <input
-                  type="password"
-                  id="currentPassword"
-                  name="currentPassword"
-                  value={formData.currentPassword}
-                  onChange={handleInputChange}
-                  placeholder="Required for change"
-                  autoComplete="new-password"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="newPassword" title="At least 6 characters" className="block text-sm font-medium text-gray-700 mb-2">
                   New Password
